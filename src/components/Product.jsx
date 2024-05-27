@@ -435,7 +435,7 @@ const Product = () => {
                 <div>
                   <ul className="">
                     {reviews.results.length > 0 ? (
-                      currentReviews.results.map((rev) => {
+                      reviews.results.map((rev) => {
                         return (
                           <li
                             className="px-4 py-8 m-2 text-left border"
