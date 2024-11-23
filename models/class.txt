@@ -1,0 +1,16 @@
+User <|-- OrdinaryUser
+User <|-- Admin
+User <|-- Expert
+User <|-- Company
+OrdinaryUser " 1" -- "0..* " AddToCart : manages
+OrdinaryUser "1     " -- "0..* " Order : has
+OrdinaryUser "1" -- "1  " Review : submits
+Company "1" -- "1" Certification : apply
+Expert "1" -- "0..* " AddToCart : manages
+
+Expert "1" -- "    0..*" Order : has
+Expert "1" -- "1   " Vote : submits
+Expert "1" -- "0..*      " Product : buys
+Admin "1  " -- "0..*" Product : manages
+Admin "1" -- "0..*" Review : manages
+Admin "1" -- "   0..*" Vote : manages
