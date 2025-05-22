@@ -95,7 +95,7 @@ const Product = () => {
     } else {
       // Use real API in production
       axios
-        .get(`http://localhost:8080/api/v1/products/${id}`)
+        .get(`http://localhost:3000/api/v1/products/${id}`)
         .then((resp) => {
           respStatus2.current = resp.data.status;
           setProduct({
