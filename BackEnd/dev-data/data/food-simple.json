@@ -1,0 +1,359 @@
+[
+  {
+    
+    "type": "Nut and seed",
+    "food": "Almond",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Fruit",
+    "food": "Apple",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c106c322ef15e67dab31",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Fruit",
+    "food": "Apricot",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Vegetable",
+    "food": "Artichoke",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Vegetable",
+    "food": "Asparagus",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Fruit",
+    "food": "Avocado",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Vegetable",
+    "food": "Bamboo shoot",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c106c322ef15e67dab31",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Fruit",
+    "food": "Banana",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Cereal grain and pulse",
+    "food": "Barley",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Cereal grain and pulse",
+    "food": "Bean",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Fruit",
+    "food": "Blackberry",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Cereal grain and pulse",
+    "food": "Black-eyed bean",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Fruit",
+    "food": "Blueberry",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c106c322ef15e67dab31",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Aquatic animal",
+    "food": "Bonito",
+    "class": "Animal origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c106c322ef15e67dab31",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Cereal grain and pulse",
+    "food": "Broad bean",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Vegetable",
+    "food": "Broccoli",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Vegetable",
+    "food": "Brussels sprouts",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Cereal grain and pulse",
+    "food": "Buckwheat",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Vegetable",
+    "food": "Burdock",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c106c322ef15e67dab31",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Dairy",
+    "food": "Butter",
+    "class": "Animal origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    "type": "Cereal grain and pulse",
+    "food": "Butter bean",
+    "class": "Plant origin",
+    "price": 145,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,"ingredients":[],
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c0e1c322ef15e67dab2f",
+    
+    "images": [],
+    "imageCover": ""
+  }
+]

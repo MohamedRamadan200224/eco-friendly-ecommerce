@@ -1,0 +1,402 @@
+[
+  {
+    
+    
+    
+    "price": 117.3060162,
+    "description": "Cycling Jerseys",
+    "category": "Sports",
+    "rawMaterial": "Fabrics",
+    "size": 30,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 32.27240332,
+    "description": "Casual Shirts",
+    "category": "Menswear",
+    "rawMaterial": "Cotton",
+    "size": 32,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 36.19336404,
+    "description": "Casual Shirts",
+    "category": "Menswear",
+    "rawMaterial": "Cotton",
+    "size": 34,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 29.91340346,
+    "description": "Jeans",
+    "category": "Menswear",
+    "rawMaterial": "Cotton",
+    "size": 36,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 41.84343048,
+    "description": "Shorts",
+    "category": "Womenswear",
+    "rawMaterial": "Cotton",
+    "size": 38,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+"onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c09cf776872d326858ab",
+    
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 49.88752415,
+    "description": "Belts",
+    "category": "Accessories",
+    "rawMaterial": "Leather",
+    "size": 40,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 35.41601593,
+    "description": "Ties",
+    "category": "Accessories",
+    "rawMaterial": "Leather",
+    "size": 42,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c09cf776872d326858ab",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 29.08420533,
+    "description": "Polo Shirts",
+    "category": "Menswear",
+    "rawMaterial": "Cotton",
+    "size": 44,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 44.49807734,
+    "description": "Tshirts",
+    "category": "Womenswear",
+    "rawMaterial": "Cotton",
+    "size": 46,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 38.49739685,
+    "description": "Formal Shirts",
+    "category": "Womenswear",
+    "rawMaterial": "Wool",
+    "size": 48,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 27.04895601,
+    "description": "Formal Shirts",
+    "category": "Menswear",
+    "rawMaterial": "Wool",
+    "size": 50,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 28.54089924,
+    "description": "Polo Shirts",
+    "category": "Menswear",
+    "rawMaterial": "Cotton",
+    "size": 52,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 34.74291321,
+    "description": "Formal Shirts",
+    "category": "Menswear",
+    "rawMaterial": "Cotton",
+    "size": 54,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 27.02857115,
+    "description": "Knitwear",
+    "category": "Womenswear",
+    "rawMaterial": "Cashmere",
+    "size": 56,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 34.79245255,
+    "description": "Knitwear",
+    "category": "Menswear",
+    "rawMaterial": "Cashmere",
+    "size": 58,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 43.871537,
+    "description": "Suits",
+    "category": "Menswear",
+    "rawMaterial": "Wool",
+    "size": 60,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 51.96824385,
+    "description": "Sweats",
+    "category": "Womenswear",
+    "rawMaterial": "Polyester",
+    "size": 40,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c09cf776872d326858ab",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 33.93177484,
+    "description": "Shorts",
+    "category": "Womenswear",
+    "rawMaterial": "Cotton",
+    "size": 34,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c09cf776872d326858ab",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 41.41250434,
+    "description": "Pants",
+    "category": "Womenswear",
+    "rawMaterial": "Cotton",
+    "size": 27,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 38.51621801,
+    "description": "Pants",
+    "category": "Womenswear",
+    "rawMaterial": "Recycled Cotton",
+    "size": 45,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c07aeee893d9f83ec7e8",
+    "images": [],
+    "imageCover": ""
+  },
+  {
+    
+    
+    
+    "price": 21.96581177,
+    "description": "GolfShoes",
+    "category": "Sports",
+    "rawMaterial": "Leather",
+    "size": 30,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 0,
+    "reportsNumber": 0,
+    "harmfultoenv": false,
+    "onSale": false,
+    "stockQuantity": 3,
+  "owner":"6612c09cf776872d326858ab",
+    "images": [],
+    "imageCover": ""
+  }
+]
