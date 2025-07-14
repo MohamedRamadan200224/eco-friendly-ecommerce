@@ -1,4 +1,4 @@
-# 🌱 EcoCart | Sustainable E-Commerce Platform
+# 🌱 GreenGray | Sustainable E-Commerce Platform
 
 [![Live Demo](https://img.shields.io/badge/Demo-Live%20Preview-brightgreen?style=for-the-badge&logo=vercel)](https://eco-friendly-ecommerce.vercel.app)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MohamedRamadan200224/ecocart/blob/main/LICENSE)
