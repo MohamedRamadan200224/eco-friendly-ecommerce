@@ -1,22 +1,31 @@
 # 🌱 EcoCart | Sustainable E-Commerce Platform
 
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20Preview-brightgreen?style=for-the-badge&logo=vercel)](https://eco-friendly-ecommerce.vercel.app)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MohamedRamadan200224/ecocart/blob/main/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/MohamedRamadan200224/ecocart/pulls)
 ![MERN Stack](https://img.shields.io/badge/MERN-Full%20Stack-green)
 
-An innovative MERN-stack e-commerce platform designed to promote sustainable shopping habits and support eco-conscious sellers.
+## 🌍 Live Preview
+➡️ [Explore the Live Demo](https://your-deployed-url.vercel.app) ⬅️
 
-![Front-End Preview URL](https://eco-friendly-ecommerce.vercel.app) <!-- Replace with actual project screenshot -->
+An innovative MERN-stack e-commerce platform designed to promote sustainable shopping habits and support eco-conscious sellers.
 
 ## ✨ Key Features
 
-| Feature | Description |
-|---------|-------------|
-| ♻ **Eco Rewards** | Special discounts for purchasing sustainable products |
-| 🌿 **Seller Verification** | Expert-verified "Eco-Friendly Seller" badges |
-| 🔍 **Product Integrity** | Rigorous verification of environmental claims |
-| 📱 **Responsive Design** | Flawless experience across all devices |
-| 🛒 **Smart Shopping** | Personalized recommendations for eco-friendly alternatives |
+<div align="center">
+
+| Feature | Description | Preview |
+|---------|-------------|---------|
+| ♻ **Eco Rewards** | Special discounts for sustainable products | ![Rewards Demo](https://via.placeholder.com/150/5cb85c/ffffff?text=Discount+Badge) |
+| 🌿 **Seller Badges** | Verified "Eco-Friendly Seller" program | ![Badge Demo](https://via.placeholder.com/150/5cb85c/ffffff?text=Eco+Badge) |
+| 🔍 **Product Verification** | Expert-reviewed sustainability claims | ![Verification Demo](https://via.placeholder.com/150/5cb85c/ffffff?text=Verified+Check) |
+
+</div>
+
+## 🚀 Quick Access
+
+[![Deployed on Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel)](https://eco-friendly-ecommerce.vercel.app)
+[![Open in Gitpod](https://img.shields.io/badge/Gitpod-Open%20in%20Cloud-blue?style=for-the-badge&logo=gitpod)](https://gitpod.io/#https://github.com/MohamedRamadan200224/ecocart)
 
 ## 🛠️ Tech Stack
 
@@ -24,6 +33,7 @@ An innovative MERN-stack e-commerce platform designed to promote sustainable sho
 <p>
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
   <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/Redux-593D88?style=for-the-badge&logo=redux&logoColor=white" alt="Redux">
 </p>
 
 ### Backend
@@ -37,7 +47,7 @@ An innovative MERN-stack e-commerce platform designed to promote sustainable sho
   <img src="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB">
 </p>
 
-## 🚀 Getting Started
+## 🏁 Getting Started
 
 ### Prerequisites
 - Node.js v16+
