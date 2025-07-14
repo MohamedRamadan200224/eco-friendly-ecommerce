@@ -6,7 +6,7 @@
 
 An innovative MERN-stack e-commerce platform designed to promote sustainable shopping habits and support eco-conscious sellers.
 
-![EcoCart Banner](https://via.placeholder.com/1280x640/5cb85c/ffffff?text=EcoCart+Sustainable+E-Commerce) <!-- Replace with actual project screenshot -->
+![Front-End Preview URL](https://eco-friendly-ecommerce.vercel.app) <!-- Replace with actual project screenshot -->
 
 ## ✨ Key Features
 
