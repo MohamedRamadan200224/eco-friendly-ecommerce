@@ -32,7 +32,6 @@ An innovative MERN-stack e-commerce platform designed to promote sustainable sho
 <p>
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
   <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
-  <img src="https://img.shields.io/badge/Redux-593D88?style=for-the-badge&logo=redux&logoColor=white" alt="Redux">
 </p>
 
 ### Backend
@@ -52,3 +51,12 @@ An innovative MERN-stack e-commerce platform designed to promote sustainable sho
 - Node.js v16+
 - MongoDB Atlas account or local MongoDB
 - npm or yarn
+
+### Installation
+```bash
+
+# Install frontend dependencies
+cd FrontEnd && npm install
+
+# Install backend dependencies
+cd ../BackEnd && npm install
