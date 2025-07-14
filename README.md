@@ -16,16 +16,15 @@ An innovative MERN-stack e-commerce platform designed to promote sustainable sho
 
 | Feature | Description | Preview |
 |---------|-------------|---------|
-| ♻ **Eco Rewards** | Special discounts for sustainable products | ![Rewards Demo](https://via.placeholder.com/150/5cb85c/ffffff?text=Discount+Badge) |
-| 🌿 **Seller Badges** | Verified "Eco-Friendly Seller" program | ![Badge Demo](https://via.placeholder.com/150/5cb85c/ffffff?text=Eco+Badge) |
-| 🔍 **Product Verification** | Expert-reviewed sustainability claims | ![Verification Demo](https://via.placeholder.com/150/5cb85c/ffffff?text=Verified+Check) |
+| ♻ **Eco Rewards** | Special discounts for sustainable products |
+| 🌿 **Seller Badges** | Verified "Eco-Friendly Seller" program |
+| 🔍 **Product Verification** | Expert-reviewed sustainability claims |
 
 </div>
 
 ## 🚀 Quick Access
 
 [![Deployed on Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel)](https://eco-friendly-ecommerce.vercel.app)
-[![Open in Gitpod](https://img.shields.io/badge/Gitpod-Open%20in%20Cloud-blue?style=for-the-badge&logo=gitpod)](https://gitpod.io/#https://github.com/MohamedRamadan200224/ecocart)
 
 ## 🛠️ Tech Stack
 
