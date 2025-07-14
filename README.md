@@ -6,7 +6,7 @@
 ![MERN Stack](https://img.shields.io/badge/MERN-Full%20Stack-green)
 
 ## 🌍 Live Preview
-➡️ [Explore the Live Demo](https://your-deployed-url.vercel.app) ⬅️
+➡️ [Explore the Live Demo](https://eco-friendly-ecommerce.vercel.app) ⬅️
 
 An innovative MERN-stack e-commerce platform designed to promote sustainable shopping habits and support eco-conscious sellers.
 
@@ -14,8 +14,8 @@ An innovative MERN-stack e-commerce platform designed to promote sustainable sho
 
 <div align="center">
 
-| Feature | Description | Preview |
-|---------|-------------|---------|
+| Feature | Description |
+|---------|-------------|
 | ♻ **Eco Rewards** | Special discounts for sustainable products |
 | 🌿 **Seller Badges** | Verified "Eco-Friendly Seller" program |
 | 🔍 **Product Verification** | Expert-reviewed sustainability claims |
