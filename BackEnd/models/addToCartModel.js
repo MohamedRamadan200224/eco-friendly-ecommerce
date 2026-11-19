@@ -35,6 +35,9 @@ addToCartSchema.pre(/^find/, function (next) {
   next();
 });
 
+// One cart per user (addItemToCart uses findOne({ user })).
+addToCartSchema.index({ user: 1 }, { unique: true });
+
 const AddToCart = mongoose.model('AddToCart', addToCartSchema);
 
 module.exports = AddToCart;
