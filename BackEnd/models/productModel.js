@@ -1,6 +1,31 @@
 const mongoose = require('mongoose');
-const User = require('./userModel');
-const AppError = require('../utils/appError');
+
+// Keyword lists for calculateEnvironmentalScore. They used to be
+// re-declared inline inside the method (and 'polyester' was misspelled
+// 'polyster', so correctly-spelled specs never matched the harmful list).
+// The scoring logic below is unchanged; only the lists moved here.
+const HARMFUL_CLOTHING_MATERIALS = [
+  'polyester',
+  'nylon',
+  'acrylic',
+  'synthetic fabrics',
+];
+// Depends if it is organic/recycled or industrial/faux.
+const SEMI_HARMFUL_CLOTHING_MATERIALS = ['cotton', 'fur', 'leather', 'wool'];
+const INDUSTRIAL_KEYWORDS = ['industrial', 'faux'];
+const ORGANIC_OR_RECYCLED_KEYWORDS = ['organic', 'recycle', 'recycled'];
+const HARMFUL_FOOD_KEYWORDS = [
+  'dairy',
+  'milk',
+  'cream',
+  'cheese',
+  'yoghurt',
+  'butter',
+  'beef',
+  'lamb',
+  'salmon',
+];
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -75,6 +100,10 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // NOTE: `harmfultoenv` is misspelled, but the spelling is kept
+    // deliberately — it is the field name in stored documents and in
+    // queries across the codebase (routes, controllers, the worker).
+    // Renaming it would need a data migration; do not rename here.
     harmfultoenv: {
       type: Boolean,
       default: false,
@@ -97,6 +126,8 @@ productSchema.virtual('discount').get(function () {
   if (this.onSale === true) {
     return (this.price * 100) / this.originalPrice;
   }
+  // Not on sale: the old code fell off the end and returned undefined.
+  return 0;
 });
 
 productSchema.methods.calculateEnvironmentalScore = function () {
@@ -121,16 +152,11 @@ productSchema.methods.calculateEnvironmentalScore = function () {
     score = 0;
   } else if (this.category === 'Clothes') {
     //100% harmful
-    const harmfulMaterials = [
-      'polyster',
-      'nylon',
-      'acrylic',
-      'synthetic fabrics',
-    ];
+    const harmfulMaterials = HARMFUL_CLOTHING_MATERIALS;
     //depends if it is organic/recycled or industrial/faux
-    const semiHarmMaterials = ['cotton', 'fur', 'leather', 'wool'];
-    const industrial = ['industrial', 'faux'];
-    const nonIndustrial = ['organic', 'recycle', 'recycled'];
+    const semiHarmMaterials = SEMI_HARMFUL_CLOTHING_MATERIALS;
+    const industrial = INDUSTRIAL_KEYWORDS;
+    const nonIndustrial = ORGANIC_OR_RECYCLED_KEYWORDS;
 
     switch (true) {
       //if it is semiharm like cotton then...
@@ -157,7 +183,7 @@ productSchema.methods.calculateEnvironmentalScore = function () {
 
         break;
       }
-      //if it is harmful material like polyster
+      //if it is harmful material like polyester
       case harmfulMaterials.some((keyword) =>
         this.specifications.includes(keyword)
       ): {
@@ -181,18 +207,8 @@ productSchema.methods.calculateEnvironmentalScore = function () {
     }
   } else {
     //category is food
-    const harmfulFood = [
-      'dairy',
-      'milk',
-      'cream',
-      'cheese',
-      'yoghurt',
-      'butter',
-      'beef',
-      'lamb',
-      'salmon',
-    ];
-    const organicRecycled = ['organic', 'recycle', 'recycled'];
+    const harmfulFood = HARMFUL_FOOD_KEYWORDS;
+    const organicRecycled = ORGANIC_OR_RECYCLED_KEYWORDS;
 
     switch (true) {
       //if harmful

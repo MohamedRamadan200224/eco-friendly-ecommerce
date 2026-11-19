@@ -2,18 +2,21 @@ const nodemailer = require('nodemailer');
 const pug = require('pug');
 const fs = require('fs');
 const { convert } = require('html-to-text');
-const AppError = require('../utils/appError');
 
+const CERTIFICATE_IMAGE_PATH = `${__dirname}/../dev-data/img/CertificateImage.jpeg`;
+
+// Delete a file, ignoring "already gone" and reporting anything else
+// through the callback. Plain callback style, no `next` — the old
+// version referenced an undefined `next` and threw a ReferenceError
+// whenever it was called without a callback.
 function deleteFile(filePath, cb) {
-  if (typeof cb !== 'function') {
-    return next(new AppError('Callback function is not defined', 400));
-  }
+  const callback = typeof cb === 'function' ? cb : () => {};
   fs.unlink(filePath, (err) => {
     if (err) {
-      cb(err);
+      callback(err);
       return;
     }
-    cb(null);
+    callback(null);
   });
 }
 
@@ -49,7 +52,11 @@ module.exports = class Email {
   }
 
   // Send the actual email
-  async send(template, subject) {
+  // options.attachCertificate: attach the generated certificate image.
+  // Only certification emails pass this — the old code attached the
+  // image to EVERY email (welcome, password reset, ...), which also
+  // failed outright when CertificateImage.jpeg did not exist yet.
+  async send(template, subject, options = {}) {
     // 1) Render HTML based on a pug template
     const html = pug.renderFile(
       `${__dirname}/../dev-data/templates/${template}.pug`,
@@ -67,15 +74,18 @@ module.exports = class Email {
       subject,
       html,
       text: convert(html),
-      attachments: [
+    };
+
+    if (options.attachCertificate) {
+      mailOptions.attachments = [
         {
           filename: 'CertificateImage.jpeg',
-          path: `${__dirname}/../dev-data/img/CertificateImage.jpeg`, // Path to the image file
+          path: CERTIFICATE_IMAGE_PATH, // Path to the image file
           cid: 'myimagecid', // Same cid value as in the html img src
           contentType: 'image/jpeg',
         },
-      ],
-    };
+      ];
+    }
 
     // 3) Create a transport and send email
     await this.newTransport().sendMail(mailOptions);
@@ -93,14 +103,13 @@ module.exports = class Email {
   }
 
   async sendCertificate() {
-    await this.send('certified', 'Your Certificate');
-    console.log('Deleting certificate...');
-    deleteFile(`${__dirname}/../dev-data/img/CertificateImage.jpeg`, (err) => {
+    await this.send('certified', 'Your Certificate', {
+      attachCertificate: true,
+    });
+    deleteFile(CERTIFICATE_IMAGE_PATH, (err) => {
       if (err) {
-        console.error('Error deleting file:', err);
-        return;
+        console.error('Error deleting certificate file:', err);
       }
-      console.log('File deleted successfully');
     });
   }
 };

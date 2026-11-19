@@ -1,163 +1,60 @@
-import React, { useEffect, useRef, useState } from "react";
+// Products listing page.
+//
+// Fetches from the real API only (owner decision, 2026-11-19): the old
+// isDevelopment() / mock-data branch is gone. Fetch / search / paginate
+// come from the shared useApiList hook; the local Pagination component
+// this file used to define is deleted — the shared
+// src/components/Pagination.jsx is used instead (note its prop names:
+// reviewsPerPage / totalReviews, not productsPerPage / totalProducts).
+// Images are built with the client's imageUrl helper, not a hardcoded
+// localhost string. The debug console.log(duct) in the render loop is
+// removed.
+//
+// All requests go through the shared api client (cookie auth, one shared
+// error toast). The logged-in check is the stored user, not
+// getAuthToken(): the token helper returns undefined since auth moved to
+// an httpOnly cookie (security PR #1).
+import React, { useState } from "react";
 import Header from "../components/Header";
 import { GoPlus } from "react-icons/go";
 import Modal from "../components/Modal";
-import axios from "axios";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
-import { Link, useNavigate } from "react-router-dom";
+import { getAuthUser } from "../helper/Storage";
+import { Link } from "react-router-dom";
 import { FaMedal } from "react-icons/fa";
 import { ClipLoader } from "react-spinners";
-// Import our mock data and environment utility
-import { getAllProducts, getProductsByCategory, getProductsOnSale } from "../mockData/products";
-import { isDevelopment } from "../utils/environment";
-
-const Pagination = ({ productsPerPage, totalProducts, paginate }) => {
-  const pageNumbers = [];
-
-  for (let i = 1; i <= Math.ceil(totalProducts / productsPerPage); i++) {
-    pageNumbers.push(i);
-  }
-
-  return (
-    <nav>
-      <ul className=" w-full pagination flex whitespace-wrap  place-content-center h-12 w-12 rounded-full m-5 p-10  cursor-pointer  transition-all">
-        {pageNumbers.map((number) => (
-          <li key={number} className="page-item mx-4">
-            <Link
-              onClick={() => paginate(number)}
-              className="page-link text-green-500 text-xl leading-tight focus:outline-none focus:shadow-outline py-3 px-3 rounded-full hover:bg-green-700  hover:text-white transition-all"
-            >
-              {number}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-};
+import api, { imageUrl } from "../api/client";
+import { useApiList } from "../hooks/useApiList";
+import Pagination from "../components/Pagination";
 
 const Products = () => {
   const [activeTab, setActiveTab] = useState("");
-  let reloadcategory = useRef(0);
-  const [products, setProducts] = useState({
-    results: [],
-    loading: true,
-    status: "",
-    reload: 0,
-  });
-  const [q, setQ] = useState("");
+  const [options, setOptions] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const user = getAuthUser();
 
-  const [searchParam] = useState([
-    "price",
-    "name",
-    "ratingsAverage",
-    "stockQuantity",
-  ]);
+  const products = useApiList({
+    load: () => {
+      const params = new URLSearchParams();
+      if (activeTab !== "") params.set("category", activeTab);
+      if (options === true) params.set("onSale", "true");
+      const query = params.toString();
+      return api
+        .get(`/api/v1/products${query ? `?${query}` : ""}`)
+        .then((resp) => resp.data.data.data);
+    },
+    searchFields: ["price", "name", "ratingsAverage", "stockQuantity"],
+    perPage: 10,
+    deps: [activeTab, options],
+  });
 
   const handleButtonClick = (tabName) => {
     setActiveTab(tabName);
-    reloadcategory.current = products.reload + 1;
   };
-  const [showModal, setShowModal] = useState(false);
-  const [options, setOptions] = useState(false);
-  const auth = getAuthToken();
-  const user = getAuthUser();
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(10);
-
-  useEffect(() => {
-    const getProducts = async () => {
-      let resp;
-      setProducts({ ...products, loading: true });
-
-      // Check if we're in development mode
-      if (isDevelopment()) {
-        // Use mock data based on filters
-        if (activeTab !== "") {
-          if (options === false) {
-            resp = { data: getProductsByCategory(activeTab) };
-          } else if (options === true) {
-            // Filter by category and onSale
-            const categoryProducts = getProductsByCategory(activeTab);
-            const filteredProducts = categoryProducts.data.data.filter(p => p.onSale === true);
-            resp = { 
-              data: {
-                status: "success",
-                data: {
-                  data: filteredProducts
-                }
-              }
-            };
-          }
-        } else {
-          if (options === false) {
-            resp = { data: getAllProducts() };
-          } else if (options === true) {
-            resp = { data: getProductsOnSale() };
-          }
-        }
-      } else {
-        // Use real API in production
-        if (activeTab !== "") {
-          if (options === false) {
-            resp = await axios.get(
-              `http://localhost:3000/api/v1/products?category=${activeTab}`
-            );
-          } else if (options === true) {
-            resp = await axios.get(
-              `http://localhost:3000/api/v1/products?category=${activeTab}&onSale=true`
-            );
-          }
-        } else {
-          if (options === false) {
-            resp = await axios.get(`http://localhost:3000/api/v1/products`);
-          } else if (options === true) {
-            resp = await axios.get(
-              `http://localhost:3000/api/v1/products?onSale=true`
-            );
-          }
-        }
-      }
-
-      setProducts({
-        ...products,
-        results: resp.data.data.data,
-        status: resp.data.status,
-        loading: false,
-      });
-    };
-
-    getProducts();
-  }, [activeTab, options]);
-
-  // Get current products
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.results.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
 
   // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  function search(items) {
-    return items.filter((item) => {
-      if (item.category == activeTab) {
-        return searchParam.some((newItem) => {
-          return (
-            item[newItem].toString().toLowerCase().indexOf(q.toLowerCase()) > -1
-          );
-        });
-      } else if (activeTab == "") {
-        return searchParam.some((newItem) => {
-          return (
-            item[newItem].toString().toLowerCase().indexOf(q.toLowerCase()) > -1
-          );
-        });
-      }
-    });
-  }
+  const paginate = (pageNumber) => {
+    products.paginate(pageNumber);
+  };
 
   return (
     <>
@@ -171,12 +68,12 @@ const Products = () => {
             id="search-form"
             className="flex-grow h-[40px] px-[20px] py-[12px] border-none outline-none rounded-l-md"
             placeholder="Search for Products..."
-            value={q}
+            value={products.q}
             /*
                                 // set the value of our useState q
                                 //  anytime the user types in the search box
                                 */
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => products.setQ(e.target.value)}
           />
         </label>
       </div>
@@ -186,7 +83,7 @@ const Products = () => {
             className="browse"
             onClick={() => {
               handleButtonClick("");
-              setCurrentPage(1);
+              products.setCurrentPage(1);
             }}
           >
             All
@@ -195,7 +92,7 @@ const Products = () => {
             className="browse"
             onClick={() => {
               handleButtonClick("Cars");
-              setCurrentPage(1);
+              products.setCurrentPage(1);
             }}
           >
             Cars
@@ -204,7 +101,7 @@ const Products = () => {
             className="browse"
             onClick={() => {
               handleButtonClick("Food");
-              setCurrentPage(1);
+              products.setCurrentPage(1);
             }}
           >
             Food
@@ -213,7 +110,7 @@ const Products = () => {
             className="browse"
             onClick={() => {
               handleButtonClick("Clothes");
-              setCurrentPage(1);
+              products.setCurrentPage(1);
             }}
           >
             Cloth
@@ -222,7 +119,7 @@ const Products = () => {
             className="browse"
             onClick={() => {
               handleButtonClick("Electronics");
-              setCurrentPage(1);
+              products.setCurrentPage(1);
             }}
           >
             Electronics
@@ -246,7 +143,7 @@ const Products = () => {
             Offers
           </button>
         </div>
-        {auth && (user.role === "admin" || user.role === "company") && (
+        {user && (user.role === "admin" || user.role === "company") && (
           <div className="relative">
             <button
               className="absolute right-0 px-1 py-1 rounded-md bg-cold-blue top-1"
@@ -254,7 +151,7 @@ const Products = () => {
             >
               <GoPlus color="#8DECB4" size={25} />
             </button>
-            {showModal == true && <Modal onClose={() => setShowModal(false)} />}
+            {showModal === true && <Modal onClose={() => setShowModal(false)} />}
           </div>
         )}
         {products.loading === true && (
@@ -267,15 +164,14 @@ const Products = () => {
 
         <div className="grid gap-4 mt-10 cursor-pointer sm:grid-cols-2 md:grid-cols-4">
           {products.loading === false &&
-            currentProducts.length > 0 &&
-            search(currentProducts).map((duct) => (
+            products.currentItems.length > 0 &&
+            products.currentItems.map((duct) => (
               <div
                 key={duct._id}
                 className="relative flex flex-col border-2 rounded-md border-cold-blue  hover:border-green-500 transform duration-500 hover:-translate-y-2"
               >
-                {console.log(duct)}
                 <a href={`/products/${duct.id}`}>
-                  {duct.owner.isCertified === true && (
+                  {duct.owner && duct.owner.isCertified === true && (
                     <span
                       className="absolute top-0 right-0 tracking-wider text-white bg-yellow-400 px-4 py-1 text-sm rounded leading-loose mx-2 my-2 font-semibold"
                       title=""
@@ -294,7 +190,7 @@ const Products = () => {
                   )}
 
                   <img
-                    src={isDevelopment() ? duct.imageCover : `http://localhost:3000/img/${duct.category}/${duct.imageCover}`}
+                    src={imageUrl(duct.category, duct.imageCover)}
                     alt="featured products"
                     className="h-48 w-full"
                   />
@@ -325,7 +221,7 @@ const Products = () => {
               </div>
             ))}
         </div>
-        {products.loading === false && currentProducts.length === 0 && (
+        {products.loading === false && products.currentItems.length === 0 && (
           <div className="flex items-center justify-center">
             <div className="p-6 m-10 max-w-sm mx-auto bg-cold-blue  rounded-xl shadow-md flex items-center space-x-4">
               <div className="text-xl text-center font-medium text-mint">
@@ -336,8 +232,8 @@ const Products = () => {
         )}
         <div>
           <Pagination
-            productsPerPage={productsPerPage}
-            totalProducts={products.results.length}
+            reviewsPerPage={products.perPage}
+            totalReviews={products.results.length}
             paginate={paginate}
           />
         </div>

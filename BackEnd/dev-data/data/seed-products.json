@@ -1,0 +1,115 @@
+[
+  {
+    "category": "Cars",
+    "environmentalImpactAssessed": true,
+    "environmentalScore": 9.2,
+    "harmfultoenv": false,
+    "imageCover": "/ElectricCar.png",
+    "images": [
+      "https://placehold.co/600x400/green/white?text=Electric+Car+1",
+      "https://placehold.co/600x400/green/white?text=Electric+Car+2"
+    ],
+    "name": "Eco-Friendly Electric Car",
+    "noReportsNumber": 120,
+    "onSale": true,
+    "onsaleDuration": 30,
+    "originalPrice": 35000,
+    "price": 32000,
+    "ratingsAverage": 4.8,
+    "ratingsQuantity": 124,
+    "reportsNumber": 2,
+    "soldNum": 45,
+    "specifications": "Zero-emission electric vehicle with 300-mile range, solar roof panels, and recycled interior materials.",
+    "stockQuantity": 15
+  },
+  {
+    "category": "Clothes",
+    "environmentalImpactAssessed": true,
+    "environmentalScore": 8.5,
+    "harmfultoenv": false,
+    "imageCover": "/Tshirt.jpg",
+    "images": [
+      "https://placehold.co/600x400/blue/white?text=Organic+Shirt+1",
+      "https://placehold.co/600x400/blue/white?text=Organic+Shirt+2"
+    ],
+    "name": "Organic Cotton T-Shirt",
+    "noReportsNumber": 85,
+    "onSale": false,
+    "originalPrice": 35,
+    "price": 29.99,
+    "ratingsAverage": 4.5,
+    "ratingsQuantity": 89,
+    "reportsNumber": 1,
+    "soldNum": 230,
+    "specifications": "100% organic cotton, sustainably harvested and processed without harmful chemicals. Fair trade certified.",
+    "stockQuantity": 150
+  },
+  {
+    "category": "Electronics",
+    "environmentalImpactAssessed": true,
+    "environmentalScore": 7.8,
+    "harmfultoenv": false,
+    "imageCover": "/SmartRefrigrator.jpg",
+    "images": [
+      "https://placehold.co/600x400/gray/white?text=Smart+Fridge+1",
+      "https://placehold.co/600x400/gray/white?text=Smart+Fridge+2"
+    ],
+    "name": "Energy-Efficient Smart Refrigerator",
+    "noReportsNumber": 50,
+    "onSale": true,
+    "onsaleDuration": 15,
+    "originalPrice": 1200,
+    "price": 999.99,
+    "ratingsAverage": 4.2,
+    "ratingsQuantity": 56,
+    "reportsNumber": 3,
+    "soldNum": 25,
+    "specifications": "A++ energy rating, smart temperature control, made with recyclable materials and eco-friendly refrigerants.",
+    "stockQuantity": 10
+  },
+  {
+    "category": "Food",
+    "environmentalImpactAssessed": true,
+    "environmentalScore": 9.5,
+    "harmfultoenv": false,
+    "imageCover": "/Quinoa.webp",
+    "images": [
+      "https://placehold.co/600x400/brown/white?text=Quinoa+1",
+      "https://placehold.co/600x400/brown/white?text=Quinoa+2"
+    ],
+    "name": "Organic Quinoa Pack",
+    "noReportsNumber": 110,
+    "onSale": false,
+    "originalPrice": 8.99,
+    "price": 7.49,
+    "ratingsAverage": 4.9,
+    "ratingsQuantity": 112,
+    "reportsNumber": 0,
+    "soldNum": 500,
+    "specifications": "Organically grown quinoa, sustainably harvested, packaged in biodegradable materials. High in protein and nutrients.",
+    "stockQuantity": 200
+  },
+  {
+    "category": "Clothes",
+    "environmentalImpactAssessed": true,
+    "environmentalScore": 8.7,
+    "harmfultoenv": false,
+    "imageCover": "/RecycledSunglasses.jpg",
+    "images": [
+      "https://placehold.co/600x400/orange/white?text=Sunglasses+1",
+      "https://placehold.co/600x400/orange/white?text=Sunglasses+2"
+    ],
+    "name": "Recycled Plastic Sunglasses",
+    "noReportsNumber": 75,
+    "onSale": true,
+    "onsaleDuration": 10,
+    "originalPrice": 65,
+    "price": 59.99,
+    "ratingsAverage": 4.6,
+    "ratingsQuantity": 78,
+    "reportsNumber": 1,
+    "soldNum": 120,
+    "specifications": "Frames made from 100% recycled ocean plastic, UV protection lenses, comes with bamboo case.",
+    "stockQuantity": 45
+  }
+]

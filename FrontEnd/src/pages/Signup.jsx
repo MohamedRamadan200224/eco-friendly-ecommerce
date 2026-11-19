@@ -1,10 +1,19 @@
+// Signup page.
+//
+// Requests go through the shared api client (cookie auth, one shared
+// error toast) instead of raw axios + hardcoded localhost URLs. The
+// react-toastify CSS import is removed — react-hot-toast is the only
+// toast library now — and the debug console.log(err) in the catch is
+// gone (the error is toasted once by the api client interceptor). The
+// setAuthToken() call is kept as-is: it is the deprecated no-op from
+// the cookie-auth PR #1 (the JWT lives in an httpOnly cookie; removing
+// the call is that PR's follow-up, not this pass).
 import React, { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import axios from "axios";
-import "react-toastify/dist/ReactToastify.css";
 import { setAuthToken, setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
+import api from "../api/client";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -30,8 +39,8 @@ const Signup = () => {
       toast.error("The Password And Confirm Password Do Not Match!");
     }
 
-    axios
-      .post(`http://localhost:3000/api/v1/users/signup`, {
+    api
+      .post(`/api/v1/users/signup`, {
         email: signup.email,
         password: signup.password,
         name: signup.name,
@@ -63,14 +72,11 @@ const Signup = () => {
         }
       })
       .catch((err) => {
-        console.log(err);
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setSignup({
           ...signup,
           loading: false,
-          error: err.response.data.message,
+          error: err.response ? err.response.data.message : err.message,
         });
       });
   };

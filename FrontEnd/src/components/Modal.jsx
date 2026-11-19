@@ -1,13 +1,16 @@
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
-import axios from "axios";
+import { getAuthUser } from "../helper/Storage";
+import api from "../api/client";
 import { useNavigate } from "react-router-dom";
 
 const EditModal = ({ onClose }) => {
   const navigate = useNavigate();
-  const auth = getAuthToken();
   const user = getAuthUser();
 
   const [product, setProduct] = useState({
@@ -37,23 +40,16 @@ const EditModal = ({ onClose }) => {
     formData.append("harmfultoenv", product.harmfultoenv);
     formData.append("imageCover", product.imageCover);
 
-    if (auth && user.role === "company") {
+    if (user && user.role === "company") {
       formData.append("owner", user.id);
-    } else if (auth && user.role === "admin") {
+    } else if (user && user.role === "admin") {
       formData.append("owner", product.owner);
     }
-    console.log(formData);
-    axios
+    api
       .post(
-        `http://localhost:3000/api/v1/products/myProducts`,
+        `/api/v1/products/myProducts`,
 
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
-        }
+        formData
       )
       .then((resp) => {
         if (resp.data.status === "success") {
@@ -71,14 +67,11 @@ const EditModal = ({ onClose }) => {
         }
       })
       .catch((err) => {
-        console.log(err);
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setProduct({
           ...product,
           loading: false,
-          error: err.response.data.message,
+          error: err.response ? err.response.data.message : err.message,
         });
       });
   };
@@ -199,7 +192,7 @@ const EditModal = ({ onClose }) => {
               onClick={() => setProduct({ ...product, harmfultoenv: true })}
               value="Harmful ?"
             />
-            {auth && user.role === "admin" && (
+            {user && user.role === "admin" && (
               <input
                 type="text"
                 className="h-[40px] rounded-md border border-cold-blue px-[20px] py-[12px] w-full"

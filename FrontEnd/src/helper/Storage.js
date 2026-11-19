@@ -5,7 +5,7 @@
 // in sessionStorage / localStorage is readable by any script running on
 // the page, so storing a JWT there makes it stealable via XSS.
 export const setAuthUser = (data) => {
-  // save object to the local storage
+  // Save the user object to sessionStorage (profile data only, never a JWT).
   // Stringify OBJECT TO TEXT
   sessionStorage.setItem("user", JSON.stringify(data));
 };
@@ -14,6 +14,7 @@ export const getAuthUser = () => {
   if (sessionStorage.getItem("user")) {
     return JSON.parse(sessionStorage.getItem("user"));
   }
+  return null;
 };
 
 export const removeAuthUser = () => {

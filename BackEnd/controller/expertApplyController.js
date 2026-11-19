@@ -4,7 +4,7 @@ const User = require('./../models/userModel');
 const ExpertApply = require('./../models/expertApplyModel');
 const factory = require('./handlerFactory');
 
-exports.getAllAplications = catchAsync(async (req, res, next) => {
+exports.getAllApplications = catchAsync(async (req, res, next) => {
   const applications = await ExpertApply.find();
 
   if (!applications) {
@@ -33,11 +33,17 @@ exports.getUserApplication = catchAsync(async (req, res, next) => {
 exports.deleteApplication = catchAsync(async (req, res, next) => {
   const application = await ExpertApply.findByIdAndDelete(req.params.id);
   if (!application) {
-    return next(new AppError('There is no application with that id', 400));
+    return next(
+      new AppError('There is no application with that id', 400)
+    );
   }
-  res.status(204).json({
+  // 204 means "no content", so a body must not be sent with it. The old
+  // code sent 204 with a JSON body, which clients / proxies drop. 200
+  // with data: null keeps the confirmation the old body carried.
+  res.status(200).json({
     status: 'success',
     message: 'Deleted Application Successfully',
+    data: null,
   });
 });
 
@@ -51,7 +57,7 @@ exports.apply = catchAsync(async (req, res, next) => {
     return next(new AppError('You have applied before!', 400));
   }
   req.body.user = req.user.id;
-  const application = await ExpertApply.create(req.body);
+  await ExpertApply.create(req.body);
   res.status(200).json({
     status: 'success',
     message: 'Applied successfully',

@@ -1,136 +1,67 @@
-import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
+// Users list page (admin).
+//
+// Fetch / search / paginate come from the shared useApiList hook. All
+// requests go through the shared api client (cookie auth, one shared
+// error toast). The old `Bearer ${auth.jwtToken}` Authorization headers
+// are gone — auth is the httpOnly cookie now, and getAuthToken() returns
+// undefined anyway. Avatar URLs are built with the client's userImageUrl
+// helper, not a hardcoded localhost string.
+//
+// The delete state was `deleteuser` / `setdeleteUser` (inconsistent
+// casing, and it collided with the `deleteUser` handler name). It is now
+// `deleteUser` / `setDeleteUser`, and the handler is `handleDeleteUser`.
+import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
 import { Link } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { GoPlus } from "react-icons/go";
+import api, { userImageUrl } from "../api/client";
+import { useApiList } from "../hooks/useApiList";
 
 const Users = () => {
-  const auth = getAuthToken();
   let id = useRef("");
-  let respStatus2 = useRef("fail");
 
-  const [users, setUsers] = useState({
-    results: [],
+  const [deleteUser, setDeleteUser] = useState({
     loading: false,
     status: "fail",
-    reload: 0,
-  });
-  const [deleteuser, setdeleteUser] = useState({
-    loading: false,
-    status: "fail",
-    reload: 0,
   });
 
-  useEffect(() => {
-    const getUsers = async () => {
-      setUsers({ ...users, loading: true });
-      axios
-        .get(
-          `http://localhost:3000/api/v1/users`,
+  const users = useApiList({
+    load: () =>
+      api.get(`/api/v1/users`).then((resp) => resp.data.data.data),
+    searchFields: ["name", "email", "id", "role"],
+    perPage: 10,
+  });
 
-          {
-            headers: {
-              Authorization: `Bearer ${auth.jwtToken}`,
-            },
-          }
-        )
-        .then((resp) => {
-          respStatus2.current = resp.data.status;
-          setUsers({
-            ...users,
-            results: resp.data.data.data,
-            status: resp.data.status,
-            loading: false,
-            reload: users.reload + 1,
-          });
-          console.log(resp.data.data.data);
-
-          if (resp.data.status === "fail") {
-            toast.error(resp.data.message);
-          }
-        })
-        .catch((err) => {
-          toast.error(err.response.data.message, {
-            className: "w-auto",
-          });
-          setUsers({
-            ...users,
-            status: respStatus2.current,
-            loading: false,
-            reload: users.reload + 1,
-          });
-        });
-    };
-
-    getUsers();
-  }, [deleteuser.reload]);
-
-  const deleteUser = (e) => {
+  const handleDeleteUser = (e) => {
     e.preventDefault();
-    setdeleteUser({ ...deleteUser, loading: true });
+    setDeleteUser({ ...deleteUser, loading: true });
 
-    axios
-      .delete(
-        `http://localhost:3000/api/v1/users/${id.current}`,
-
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
-        }
-      )
+    api
+      .delete(`/api/v1/users/${id.current}`)
       .then((resp) => {
-        respStatus2.current = resp.data.status;
-        setdeleteUser({
-          ...deleteuser,
+        setDeleteUser({
+          ...deleteUser,
           status: resp.data.status,
           loading: false,
-          reload: deleteuser.reload + 1,
         });
 
         if (resp.data.status === "fail") {
           toast.error(resp.data.message);
         }
+        users.reload();
       })
-      .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
-        setdeleteUser({
-          ...deleteuser,
-          status: respStatus2,
+      .catch(() => {
+        // Error already toasted once by the api client interceptor.
+        setDeleteUser({
+          ...deleteUser,
+          status: "fail",
           loading: false,
-          reload: deleteuser.reload + 1,
         });
+        users.reload();
       });
   };
-
-  const [q, setQ] = useState("");
-  const [searchParam] = useState(["name", "email", "id", "role"]);
-
-  const [currentUsersPage, setCurrentUsersPage] = useState(1);
-  const [productsPerPage] = useState(10);
-
-  const indexOfLastUser = currentUsersPage * productsPerPage;
-  const indexOfFirstUser = indexOfLastUser - productsPerPage;
-  const currentUsers = users.results.slice(indexOfFirstUser, indexOfLastUser);
-
-  // Change page
-
-  const paginateUsers = (pageNumber) => setCurrentUsersPage(pageNumber);
-
-  function search(items) {
-    return items.filter((item) => {
-      return searchParam.some((newItem) => {
-        return (
-          item[newItem].toString().toLowerCase().indexOf(q.toLowerCase()) > -1
-        );
-      });
-    });
-  }
 
   return (
     <section className="max-container padding-container">
@@ -143,12 +74,12 @@ const Users = () => {
               id="search-form"
               className="flex-grow h-[40px] px-[20px] py-[12px] border-none outline-none rounded-l-md"
               placeholder="Search for Users..."
-              value={q}
+              value={users.q}
               /*
                                 // set the value of our useState q
                                 //  anytime the user types in the search box
                                 */
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => users.setQ(e.target.value)}
             />
           </label>
         </div>
@@ -195,7 +126,7 @@ const Users = () => {
                 )}
                 {users.loading === false &&
                   users.results.length > 0 &&
-                  search(currentUsers).map((user) => {
+                  users.currentItems.map((user) => {
                     return (
                       <tr key={user.id}>
                         <td className="px-5 py-5 text-sm bg-white border-b border-gray-200">
@@ -208,10 +139,7 @@ const Users = () => {
                             <div className="flex-shrink-0 w-10 h-10">
                               <img
                                 className="w-full h-full rounded-full"
-                                src={
-                                  `http://localhost:3000/img/users/${user.photo}` ||
-                                  "https://dummyimage.com/30x30"
-                                }
+                                src={userImageUrl(user.photo)}
                                 alt=""
                               />
                             </div>
@@ -256,7 +184,7 @@ const Users = () => {
                             <button
                               onClick={(e) => {
                                 id.current = user._id;
-                                deleteUser(e);
+                                handleDeleteUser(e);
                               }}
                               className="w-auto h-10 max-w-full px-4 py-3 overflow-hidden text-sm font-medium text-center text-white normal-case whitespace-pre bg-red-600 hover:bg-red-700 rounded-md outline-none opacity-100 cursor-pointer focus:ring"
                             >
@@ -298,7 +226,7 @@ const Users = () => {
         <Pagination
           reviewsPerPage={10}
           totalReviews={users.results.length}
-          paginate={paginateUsers}
+          paginate={users.paginate}
         />
       </div>
     </section>

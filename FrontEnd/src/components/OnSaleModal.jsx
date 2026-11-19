@@ -1,13 +1,16 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const OnSaleModal = ({ onClose, productInfo }) => {
   const navigate = useNavigate();
-  const auth = getAuthToken();
   const user = getAuthUser();
 
   const initialProductInfo = {
@@ -21,7 +24,7 @@ const OnSaleModal = ({ onClose, productInfo }) => {
     loading: true,
   });
   useEffect(() => {
-    if (auth && user.role === "company") {
+    if (user && user.role === "company") {
       setLocalProductInfo({ ...localProductInfo, owner: user.id });
     }
   }, []);
@@ -30,18 +33,13 @@ const OnSaleModal = ({ onClose, productInfo }) => {
     e.preventDefault();
     // try {
 
-    axios
+    api
       .patch(
-        `http://localhost:3000/api/v1/products/discount/${productInfo}`,
+        `/api/v1/products/discount/${productInfo}`,
         {
           onSale: true,
           price: localProductInfo.price,
           onsaleDuration: localProductInfo.onsaleDuration,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
         }
       )
       .then((resp) => {
@@ -58,9 +56,7 @@ const OnSaleModal = ({ onClose, productInfo }) => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setLocalProductInfo({ ...localProductInfo });
         setCondition({ ...condition, status: "error", loading: false });
       });

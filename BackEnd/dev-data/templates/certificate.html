@@ -1,0 +1,49 @@
+// Certificate of Completion — rendered to an image by
+// certificationController.sendCertification (node-html-to-image) and
+// emailed to the user. Placeholders are replaced by the controller:
+// {{userName}}, {{userEmail}}, {{date}}.
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+            }
+            .certificate {
+                border: 15px solid #ccffcc;
+                border-right: 15px solid #ccffcc;
+                border-left: 15px solid #ccffcc;
+                width: 700px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .certificate h1 {
+                font-size: 40px;
+                color: #ccffcc;
+                margin-top: 30px;
+            }
+            .certificate h2 {
+                font-family: 'Satisfy', cursive;
+                font-size: 24px;
+                letter-spacing: 1px;
+            }
+            .certificate h3 {
+                font-size: 18px;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="certificate">
+            <h1>Certificate of Completion</h1>
+            <h2>This certificate is awarded to</h2>
+            <h1 class="colorGreen">{{userName}}</h1>
+            <h3>For Being Non-Harmful To Environment</h3>
+            <p>Email: {{userEmail}}</p>
+            <h3>Awarded on {{date}}</h3>
+        </div>
+    </body>
+    </html>

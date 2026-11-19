@@ -3,33 +3,8 @@ const AppError = require('../utils/appError');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const handlerFactory = require('./handlerFactory');
-const multer = require('multer');
+const { filterObj, upload } = require('../utils/filterObj');
 const sharp = require('sharp');
-
-const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) {
-      newObj[el] = obj[el];
-    }
-  });
-  return newObj;
-};
-
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
-    cb(null, true);
-  } else {
-    cb(new AppError('Not an image!...Please upload an image', 400), false);
-  }
-};
-
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter,
-});
 
 exports.uploadSinglePhoto = upload.single('photo');
 
@@ -40,17 +15,6 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
 
   //uploading image cover
   const date = new Date();
-  //uploading image cover
-
-  // req.body.photo = `${req.user.name.split(' ', 1)[0]}-${req.user.id}-${
-  //   date.toISOString().split('T', 1)[0]
-  // }-photo.jpeg`;
-
-  // await sharp(req.files.photo[0].buffer)
-  //   .resize(2000, 1333)
-  //   .toFormat('jpeg')
-  //   .jpeg({ quality: 90 })
-  //   .toFile(`public/img/users/${req.body.photo}`);
 
   req.file.filename = `${req.user.name.split(' ', 1)[0]}-${req.user.id}-${
     date.toISOString().split('T', 1)[0]
@@ -79,7 +43,10 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   // SECURITY: 'role' was in this allowlist, so any logged-in user could
   // promote themselves to admin by PATCHing /updateMe with { role: 'admin' }.
   // Only name / email / photo may be changed here.
-  const filteredBody = filterObj(req.body, ['name', 'email', 'photo']);
+  // NOTE: fields are separate arguments, not one array — see
+  // utils/filterObj.js. The array form used on the perf/p0-scalability
+  // branch matched nothing, so updateMe silently updated nothing.
+  const filteredBody = filterObj(req.body, 'name', 'email', 'photo');
 
   if (req.file) {
     filteredBody.photo = req.file.filename;
@@ -144,13 +111,17 @@ exports.deleteUser = handlerFactory.deleteOne(User);
 // restrictTo('admin') in userRoutes.js. It deliberately does not use the
 // generic handlerFactory.createOne, which never accepts those fields.
 exports.createUser = catchAsync(async (req, res, next) => {
-  const allowedFields = filterObj(req.body, [
+  // NOTE: fields are separate arguments, not one array — see
+  // utils/filterObj.js. The array form used on the perf/p0-scalability
+  // branch matched nothing, so User.create({}) always failed validation.
+  const allowedFields = filterObj(
+    req.body,
     'name',
     'email',
     'password',
     'passwordConfirm',
-    'role',
-  ]);
+    'role'
+  );
 
   const doc = await User.create(allowedFields);
 

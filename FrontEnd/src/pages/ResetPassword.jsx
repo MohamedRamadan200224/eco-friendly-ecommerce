@@ -1,8 +1,11 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import "react-toastify/dist/ReactToastify.css";
 import { setAuthToken, setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
@@ -21,8 +24,8 @@ const ResetPassword = () => {
       duration: 500,
     });
 
-    axios
-      .patch(`http://localhost:3000/api/v1/users/resetPassword/${token}`, {
+    api
+      .patch(`/api/v1/users/resetPassword/${token}`, {
         passwordConfirm: reset.passwordConfirm,
         password: reset.password,
       })
@@ -43,11 +46,11 @@ const ResetPassword = () => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message); // Show error message
+        // Error already toasted once by the api client interceptor.
         setReset({
           ...reset,
           loading: false,
-          error: err.response.data.message,
+          error: err.response ? err.response.data.message : err.message,
         });
       });
   };

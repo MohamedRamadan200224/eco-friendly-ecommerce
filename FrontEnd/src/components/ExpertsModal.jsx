@@ -1,11 +1,13 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useState } from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { getAuthToken } from "../helper/Storage";
 import toast from "react-hot-toast";
 
 const ExpertsModal = ({ appId, onClose }) => {
-  const auth = getAuthToken();
 
   const [application, setApplication] = useState({
     result: "",
@@ -14,15 +16,9 @@ const ExpertsModal = ({ appId, onClose }) => {
   });
 
   useEffect(() => {
-    axios
+    api
       .get(
-        `http://localhost:3000/api/v1/expertApply/${appId}`,
-
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
-        }
+        `/api/v1/expertApply/${appId}`
       )
       .then((resp) => {
         setApplication({
@@ -34,7 +30,7 @@ const ExpertsModal = ({ appId, onClose }) => {
         });
       })
       .catch((err) => {
-        toast.error(err.response.data.message);
+        // Error already toasted once by the api client interceptor.
         setApplication({
           ...application,
           loading: false,

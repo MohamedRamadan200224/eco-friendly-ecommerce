@@ -50,31 +50,43 @@ router
     authController.restrictTo('company', 'admin'),
     productController.removeProductDiscount
   );
-router
-  .route('/myProducts/:id')
-  .patch(
-    authController.protect,
-    authController.restrictTo('company', 'admin'),
-    factory.uploadImgs,
-    productController.resizeProductImgs,
-    productController.updateMyProduct
-  );
-router.use(authController.protect, authController.restrictTo('company'));
+
+// Seller ("my products") section. Every route below requires a logged-in
+// company or admin account.
+//
+// SECURITY: the router.use(protect, restrictTo(...)) guard used to sit in
+// the middle of this section, after the PATCH /myProducts/:id route, so
+// whether a route was protected depended on where it happened to be
+// written — one reorder away from exposing a write route. It now sits at
+// the top of the section, before the first /myProducts route, so all of
+// them are covered and the per-route inline guards are gone.
+// Note: on the perf/p0-scalability branch the DELETE /myProducts/:id
+// route already happened to sit after the guard, so it was already
+// protected; this move makes the protection structural instead of
+// accidental, and it also closes the real gap, which was POST
+// /myProducts: it only had protect (any logged-in role could create a
+// seller product). It is now company/admin only, like the rest of the
+// section. The guard is restrictTo('company', 'admin') — not 'company'
+// alone — because PATCH /myProducts/:id previously allowed admins too,
+// and a company-only guard here would have silently revoked that.
+router.use(authController.protect, authController.restrictTo('company', 'admin'));
 
 router
   .route('/myProducts')
   .post(
-    authController.protect,
     factory.uploadImgs,
     productController.resizeProductImgs,
     productController.createMyProduct
   );
 
-router.route('/myProducts/:id').get(productController.getMyProduct);
-
 router
   .route('/myProducts/:id')
-
+  .get(productController.getMyProduct)
+  .patch(
+    factory.uploadImgs,
+    productController.resizeProductImgs,
+    productController.updateMyProduct
+  )
   .delete(productController.deleteMyProduct);
 
 module.exports = router;

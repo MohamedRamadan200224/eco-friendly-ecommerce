@@ -1,13 +1,16 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const EditModal = ({ onClose, productInfo }) => {
   const navigate = useNavigate();
-  const auth = getAuthToken();
   const user = getAuthUser();
 
   // const [product, setProduct] = useState({
@@ -47,20 +50,15 @@ const EditModal = ({ onClose, productInfo }) => {
     formData.append("harmfultoenv", localProductInfo.harmfultoenv);
     formData.append("imageCover", localProductInfo.imageCover);
 
-    if (auth && user.role === "company") {
+    if (user && user.role === "company") {
       formData.append("owner", user.id);
-    } else if (auth && user.role === "admin") {
+    } else if (user && user.role === "admin") {
       formData.append("owner", localProductInfo.owner);
     }
-    axios
+    api
       .patch(
-        `http://localhost:3000/api/v1/products/myProducts/${localProductInfo.id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
-        }
+        `/api/v1/products/myProducts/${localProductInfo.id}`,
+        formData
       )
       .then((resp) => {
         if (resp.data.status === "success") {
@@ -76,9 +74,7 @@ const EditModal = ({ onClose, productInfo }) => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setLocalProductInfo({ ...localProductInfo });
         setCondition({ ...condition, status: "error", loading: false });
       });
@@ -224,7 +220,7 @@ const EditModal = ({ onClose, productInfo }) => {
               }
               value="Harmful ?"
             />
-            {auth && user.role === "admin" && (
+            {user && user.role === "admin" && (
               <input
                 type="text"
                 className="h-[40px] rounded-md border border-cold-blue px-[20px] py-[12px] w-full"

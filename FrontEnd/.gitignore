@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Vite build cache — was committed by mistake; it is regenerated on every
+# `npm run dev` / build and must not be tracked. (Already-tracked files
+# under .vite/ also need `git rm -r --cached FrontEnd/.vite` once; adding
+# this line alone does not untrack them.)
+.vite/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

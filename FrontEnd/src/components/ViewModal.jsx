@@ -1,4 +1,8 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useRef, useState } from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { getAuthUser } from "../helper/Storage";
@@ -15,8 +19,8 @@ const ViewModal = ({ onClose, productInfo }) => {
   });
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/api/v1/products/${productInfo.id}`)
+    api
+      .get(`/api/v1/products/${productInfo.id}`)
       .then((resp) => {
         respStatus2.current = resp.data.status;
         setProduct({
@@ -25,19 +29,16 @@ const ViewModal = ({ onClose, productInfo }) => {
           status: resp.data.status,
           loading: false,
         });
-        console.log(productInfo.id);
 
         if (resp.data.status === "fail") {
           toast.error(resp.data.message);
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setProduct({
           ...product,
-          status: respStatus2,
+          status: respStatus2.current,
           loading: false,
         });
       });

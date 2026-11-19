@@ -1,10 +1,18 @@
-import axios from "axios";
+// Login page.
+//
+// Requests go through the shared api client (cookie auth, one shared
+// error toast) instead of raw axios + hardcoded localhost URLs. The
+// react-toastify CSS import is removed — react-hot-toast is the only
+// toast library now. The setAuthToken() call is kept as-is: it is the
+// deprecated no-op from the cookie-auth PR #1 (the JWT lives in an
+// httpOnly cookie; removing the call is that PR's follow-up, not this
+// pass).
 import React, { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import "react-toastify/dist/ReactToastify.css";
 import { setAuthToken, setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
+import api from "../api/client";
 const Login = () => {
   const navigate = useNavigate();
   const [forgot, setForgot] = useState(false);
@@ -27,8 +35,8 @@ const Login = () => {
       duration: 500,
     });
 
-    axios
-      .post(`http://localhost:3000/api/v1/users/login`, {
+    api
+      .post(`/api/v1/users/login`, {
         email: login.email,
         password: login.password,
       })
@@ -49,11 +57,11 @@ const Login = () => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message); // Show error message
+        // Error already toasted once by the api client interceptor.
         setLogin({
           ...login,
           loading: false,
-          error: err.response.data.message,
+          error: err.response ? err.response.data.message : err.message,
         });
       });
   };
@@ -66,8 +74,8 @@ const Login = () => {
       duration: 500,
     });
 
-    axios
-      .post(`http://localhost:3000/api/v1/users/forgotPassword`, {
+    api
+      .post(`/api/v1/users/forgotPassword`, {
         email: email,
       })
       .then((resp) => {
@@ -76,8 +84,8 @@ const Login = () => {
         }
         setForgot(false);
       })
-      .catch((err) => {
-        toast.error(err.response.data.message); // Show error message
+      .catch(() => {
+        // Error already toasted once by the api client interceptor.
       });
   };
 

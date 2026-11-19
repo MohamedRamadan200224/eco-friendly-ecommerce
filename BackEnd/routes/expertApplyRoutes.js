@@ -9,7 +9,7 @@ router
   .get(
     authController.protect,
     authController.restrictTo('admin'),
-    expertApplyController.getAllAplications
+    expertApplyController.getAllApplications
   )
   .post(
     authController.protect,

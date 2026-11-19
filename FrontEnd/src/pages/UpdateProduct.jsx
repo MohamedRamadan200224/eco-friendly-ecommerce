@@ -1,15 +1,17 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import Header from "../components/Header";
-import "react-toastify/dist/ReactToastify.css";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const UpdateProduct = () => {
   const navigate = useNavigate();
-  const auth = getAuthToken();
   const user = getAuthUser();
   const respStatus2 = useRef("fail");
   const { id } = useParams();
@@ -25,17 +27,15 @@ const UpdateProduct = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/api/v1/products/${id}`)
+    api
+      .get(`/api/v1/products/${id}`)
       .then((resp) => {
         respStatus2.current = resp.data.status;
         setProduct(resp.data.data.data);
         setLoading(false);
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setLoading(false);
       });
   }, [id]);
@@ -56,14 +56,10 @@ const UpdateProduct = () => {
     formData.append("harmfultoenv", product.harmfultoenv);
     formData.append("imageCover", product.imageCover);
 
-    const endpoint = `http://localhost:3000/api/v1/products/myProducts/${id}`;
+    const endpoint = `/api/v1/products/myProducts/${id}`;
 
-    axios
-      .patch(endpoint, formData, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    api
+      .patch(endpoint, formData)
       .then((resp) => {
         if (resp.data.status === "success") {
           toast.success("Successfully Updated Product!");
@@ -71,7 +67,7 @@ const UpdateProduct = () => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message);
+        // Error already toasted once by the api client interceptor.
       });
   };
 
@@ -177,7 +173,7 @@ const UpdateProduct = () => {
             className="mt-2 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-cold-blue file:py-2 file:px-4 file:text-sm file:font-semibold file:text-white hover:file:bg-black focus:outline-none disabled:pointer-events-none disabled:opacity-60"
           />
 
-          {auth && user.role === "admin" && (
+          {user && user.role === "admin" && (
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"

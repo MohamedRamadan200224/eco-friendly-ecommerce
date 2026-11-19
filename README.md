@@ -8,6 +8,37 @@ A MERN-stack e-commerce platform that promotes sustainable shopping: sellers lis
 
 > **Live demo:** https://eco-friendly-ecommerce.vercel.app (frontend only, as published in the original README — the backend is not deployed to a public URL; run it locally as described below.)
 
+## 🧩 Two apps, one API
+
+This repo holds two separate apps that only ever talk to each other over HTTP:
+
+| App | What it is | Run it |
+| --- | --- | --- |
+| **BackEnd** | Express + MongoDB REST API (auth, products, cart, Stripe checkout via webhook, reviews, votes) | `cd BackEnd && npm install && npm start` — API on http://localhost:3000 by default (`PORT` in `config.env`) |
+| **FrontEnd** | Vite + React app | `cd FrontEnd && npm install && npm run dev` — app on http://localhost:5173 by default |
+
+**Boundary rule:** the *only* connection between the two apps is the HTTP API (`VITE_API_URL` in the frontend, base path `/api/v1`). There is no shared code and no imports across the boundary — the frontend never imports backend files and the backend never serves frontend code. The frontend gets all of its data from the API; there is no mock data in the frontend anymore. The demo catalogue lives in MongoDB — see "Demo data" below.
+
+### Demo end-to-end
+
+```bash
+# 1. Backend: install, configure, seed the demo catalogue into MongoDB
+cd BackEnd
+npm install
+cp .env.example config.env   # fill in DATABASE, JWT_SECRET, ...
+npm run seed                 # inserts demo users, products, reviews, votes
+npm start                    # API on http://localhost:3000
+# (optional, separate terminal) npm run worker   # scheduled maintenance jobs
+
+# 2. Frontend: install, point it at the backend, run it
+cd ../FrontEnd
+npm install
+cp .env.example .env         # VITE_API_URL=http://localhost:3000
+npm run dev                  # app on http://localhost:5173
+```
+
+Open http://localhost:5173 and the catalogue you see comes from the seeded database. Demo logins (password `password123`, demo-only — see `BackEnd/dev-data/seed.js`): `admin@greengray.demo` (admin), `seller@greengray.demo` (certified company), `demo@greengray.demo` (buyer). `npm run seed:destroy` in `BackEnd/` removes the seeded data again.
+
 ## ✨ Key features
 
 | Feature | Description |
@@ -43,8 +74,18 @@ npm install
 cp .env.example config.env
 # server.js loads ./config.env and refuses to start without
 # DATABASE, JWT_SECRET and JWT_EXPIRES_IN.
+npm run seed
+# Seeds the demo catalogue (users, products, reviews, votes) into
+# MongoDB — the frontend has no mock data, so without this the
+# catalogue is empty. See BackEnd/dev-data/seed.js for details.
 npm start
 # API runs on http://localhost:3000 by default (PORT in config.env)
+```
+
+The scheduled maintenance jobs (expired sales, reward-point expiry, …) run in a separate process — start it alongside the API in development:
+
+```bash
+npm run worker
 ```
 
 ### 2. Frontend
@@ -75,6 +116,7 @@ Backend (`BackEnd/config.env`, see `BackEnd/.env.example`):
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for the Stripe webhook endpoint |
 | `STRIPE_REWARD_COUPON_ID` / `STRIPE_ECO_COUPON_ID` | Optional Stripe coupon ids (empty = no coupon) |
 | `EMAIL_FROM` / `GMAIL_EMAIL` / `GMAIL_PASSWORD` | Email for password resets / certificates |
+| `SEED_PASSWORD` | Password for the three demo seed accounts (demo-only, default `password123`) |
 
 Frontend (`FrontEnd/.env`, see `FrontEnd/.env.example`):
 
@@ -144,12 +186,15 @@ stripe listen --forward-to localhost:3000/api/v1/webhooks/stripe
 │   ├── controller/             # auth, products, cart/checkout, webhook, votes, reviews, users
 │   ├── models/                 # Mongoose schemas (incl. unique product+user indexes)
 │   ├── routes/                 # Express routers
-│   └── utils/                  # APIFeatures (filter/sort/paginate), AppError, email
-├── FrontEnd/                   # React + Vite app
+│   ├── utils/                  # APIFeatures (filter/sort/paginate), AppError, email
+│   ├── workers/                # maintenanceJobs.js — scheduled jobs, run via npm run worker
+│   └── dev-data/               # seed.js + data/seed-products.json — demo catalogue for MongoDB
+├── FrontEnd/                   # React + Vite app (talks to the backend only over HTTP)
 │   └── src/
 │       ├── components/         # incl. CartModal (Stripe via env key, cookie auth)
 │       ├── helper/Storage.js   # user profile only — never stores the JWT
 │       └── pages/
+├── .editorconfig               # 2-space indent, LF, UTF-8 (both apps)
 └── .github/workflows/ci.yml    # backend syntax check + frontend lint/build
 ```
 

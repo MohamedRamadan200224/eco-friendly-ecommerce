@@ -4,7 +4,6 @@ const factory = require('./handlerFactory');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const Vote = require('../models/voteModel');
-const User = require('./../models/userModel');
 
 //Get all votes for specific product
 const getAllVotes = (Model) =>

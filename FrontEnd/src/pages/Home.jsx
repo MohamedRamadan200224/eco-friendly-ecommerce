@@ -1,18 +1,27 @@
+// Home page.
+//
+// Fetches the on-sale products from the real API only (owner decision,
+// 2026-11-19): the old isDevelopment() / mock-data branch and the dummy
+// PRODUCTS import from constants are gone. The commented-out Swiper
+// block that still referenced the dummy catalogue (and a hardcoded
+// localhost image URL) is deleted with it.
+//
+// All requests go through the shared api client (cookie auth, one shared
+// error toast). Featured images are built with the client's imageUrl
+// helper: the old code passed the raw imageCover filename as the src,
+// which only worked for mock data ("/ElectricCar.png") and never for
+// real API products.
 import React, { useEffect, useState } from "react";
-import { PRODUCTS } from "../../constants";
 import Testimonials from "../components/Testimonials";
 import { useNavigate } from "react-router";
 import Vision from "../components/Vision";
 import { FaHandHoldingHeart } from "react-icons/fa";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { Swiper } from "swiper/react";
 import { Navigation, Pagination, FreeMode, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import axios from "axios";
-// Import our mock data and environment utility
-import { getProductsOnSale } from "../mockData/products";
-import { isDevelopment } from "../utils/environment";
+import api, { imageUrl } from "../api/client";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -31,19 +40,8 @@ const Home = () => {
   
   useEffect(() => {
     const getProducts = async () => {
-      let resp;
+      const resp = await api.get(`/api/v1/products?onSale=true`);
 
-      if (isDevelopment()) {
-        // Use mock data in development
-        resp = { data: getProductsOnSale() };
-      } else {
-        // Use real API in production
-        resp = await axios.get(
-          `http://localhost:3000/api/v1/products?onSale=true`
-        );
-      }
-
-      console.log(resp.data.data.data);
       setProducts({
         ...products,
         results: resp.data.data.data,
@@ -111,7 +109,7 @@ const Home = () => {
                 className="flex flex-col border-2 rounded-md border-cold-blue"
               >
                 <img
-                  src={product.imageCover}
+                  src={imageUrl(product.category, product.imageCover)}
                   alt={product.name}
                   className="object-cover w-full h-48"
                 />
@@ -167,28 +165,6 @@ const Home = () => {
               },
             }}
           >
-            {/* {products.results.length > 0 &&
-              products.results.slice(0, 15).map((duct) => {
-                return (
-                  <SwiperSlide key={duct.key}>
-                    <div className="flex flex-col border-2 rounded-md border-cold-blue">
-                      <img
-                        src={`http://localhost:3000/img/${duct.category}/${duct.imageCover}`}
-                        alt="featured products"
-                      />
-                      <h2 className="mt-[25px] text-[24px] font-bold text-cold-blue pl-2">
-                        {duct.label}
-                      </h2>
-                      <p className="pl-2 mb-4 text-sm leading-3 text-green-600">
-                        {duct.category}
-                      </p>
-                      <p className="mb-2 text-[18px] font-light leading-[1.67rem] text-cold-blue xl:w-[70%] pl-2">
-                        {duct.price}
-                      </p>
-                    </div>
-                  </SwiperSlide>
-                );
-              })} */}
           </Swiper>
         </section>
         <section className="max-container padding-container m-[96px] rounded-2xl bg-greeny-green py-3 lg:relative lg:grid  lg:grid-cols-2 xl:w-[80%] 3xl:w-[60%]">

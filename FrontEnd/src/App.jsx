@@ -10,7 +10,6 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Product from "./components/Product";
-import { ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
 import ResetPassword from "./pages/ResetPassword";
 import DiscountProduct from "./pages/DiscountProduct";
@@ -29,7 +28,8 @@ function App() {
         {/* NAVBAR */}
         <Navbar />
         {/* ROUTES */}
-        <ToastContainer position="top-center" />
+        {/* react-hot-toast is the only toast library now: the react-toastify
+            ToastContainer was removed with the react-toastify dependency. */}
         <Toaster />
         <div>
           <Routes>

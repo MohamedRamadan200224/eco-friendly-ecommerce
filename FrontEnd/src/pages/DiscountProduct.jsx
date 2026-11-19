@@ -1,14 +1,15 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import "react-toastify/dist/ReactToastify.css";
-import { getAuthToken, setAuthToken, setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
 const DiscountProduct = () => {
   const navigate = useNavigate();
-  const auth = getAuthToken();
   const { id } = useParams();
   const [productInfo, setProductInfo] = useState({
     result: "",
@@ -19,8 +20,8 @@ const DiscountProduct = () => {
   });
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/api/v1/products/${id}`)
+    api
+      .get(`/api/v1/products/${id}`)
       .then((resp) => {
         if (resp.data.status === "success") {
           // Show success message
@@ -34,9 +35,7 @@ const DiscountProduct = () => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setProductInfo({
           ...productInfo,
           status: "fail",
@@ -49,18 +48,13 @@ const DiscountProduct = () => {
     e.preventDefault();
     // try {
 
-    axios
+    api
       .patch(
-        `http://localhost:3000/api/v1/products/discount/${id}`,
+        `/api/v1/products/discount/${id}`,
         {
           onSale: true,
           price: productInfo.price,
           onsaleDuration: productInfo.onsaleDuration,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
         }
       )
       .then((resp) => {
@@ -69,9 +63,7 @@ const DiscountProduct = () => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
       });
   };
 

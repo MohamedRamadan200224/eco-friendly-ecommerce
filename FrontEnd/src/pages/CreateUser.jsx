@@ -1,15 +1,16 @@
-import axios from "axios";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import "react-toastify/dist/ReactToastify.css";
-import { getAuthToken } from "../helper/Storage";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
 
 const CreateUser = () => {
   const navigate = useNavigate();
-  const auth = getAuthToken();
   let respStatus2 = useRef("fail");
   const { id } = useParams();
   const [user, setUser] = useState({
@@ -21,12 +22,8 @@ const CreateUser = () => {
   });
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/api/v1/users/${id}`, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    api
+      .get(`/api/v1/users/${id}`)
       .then((resp) => {
         respStatus2.current = resp.data.status;
         setUser({
@@ -39,9 +36,7 @@ const CreateUser = () => {
         });
       })
       .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+        // Error already toasted once by the api client interceptor.
         setUser({
           ...user,
         });
@@ -70,12 +65,8 @@ const CreateUser = () => {
     formData.append("password", user.result.password);
     formData.append("passwordConfirm", user.result.passwordConfirm);
 
-    axios
-      .post(`http://localhost:3000/api/v1/users`, formData, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    api
+      .post(`/api/v1/users`, formData)
       .then((resp) => {
         if (resp.data.status === "success") {
           toast.success("Successfully Created User!"); // Show success message
@@ -87,7 +78,7 @@ const CreateUser = () => {
         }
       })
       .catch((err) => {
-        toast.error(err.response.data.message); // Show error message
+        // Error already toasted once by the api client interceptor.
         setUserCondition({
           ...userCondition,
           loading: false,
