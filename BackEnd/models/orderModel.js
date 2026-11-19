@@ -21,7 +21,24 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: new Date(),
   },
+  // Set only by the Stripe webhook, after a verified payment.
+  // Used for webhook idempotency (one order per checkout session).
+  stripeCheckoutSessionId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['paid', 'pending', 'failed'],
+    default: 'pending',
+  },
+  amountTotal: {
+    type: Number,
+  },
 });
+
+orderSchema.index({ user: 1 });
 
 orderSchema.pre(/^find/, function (next) {
   this.populate({
