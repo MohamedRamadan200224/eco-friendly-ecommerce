@@ -16,20 +16,71 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
+// Fields a client must never be able to set through a generic update.
+// - password / passwordConfirm: only via /updateMyPassword or resetPassword
+//   (which hash the password through the pre-save hook; findByIdAndUpdate
+//   would store it in plain text).
+// - role / isCertified / rewardPoints: privilege / trust state, server-only.
+// - owner: ownership is decided by the server (req.user.id).
+// - ratingsAverage / ratingsQuantity / soldNum / environmentalScore /
+//   reportsNumber / noReportsNumber / harmfultoenv /
+//   environmentalImpactAssessed: computed / aggregated server-side.
+const FORBIDDEN_UPDATE_FIELDS = [
+  'password',
+  'passwordConfirm',
+  'role',
+  'isCertified',
+  'rewardPoints',
+  'owner',
+  'ratingsAverage',
+  'ratingsQuantity',
+  'soldNum',
+  'environmentalScore',
+  'environmentalImpactAssessed',
+  'reportsNumber',
+  'noReportsNumber',
+  'harmfultoenv',
+];
+
+// Same idea for generic creation, minus password/passwordConfirm/role:
+// those are legitimately needed only by the dedicated admin user-creation
+// handler (see userController.createUser), never by this generic factory.
+const FORBIDDEN_CREATE_FIELDS = FORBIDDEN_UPDATE_FIELDS.filter(
+  (field) => !['password', 'passwordConfirm', 'role'].includes(field)
+);
+
+const stripFields = (obj, forbiddenFields) => {
+  const clean = { ...obj };
+  forbiddenFields.forEach((field) => delete clean[field]);
+  return clean;
+};
+
+// Expired sales are computed at read time only. A GET request must not
+// silently write back to the database (the old code did `doc.save()` inside
+// getOne / getAll). The in-memory copy sent to the client shows the
+// restored price; expiring the sale in the DB belongs to a write path /
+// scheduled job.
+const applyExpiredSaleInMemory = (doc) => {
+  if (doc && doc.onSale === true && Date.now() > doc.onsaleDuration) {
+    doc.price = doc.originalPrice;
+    doc.onSale = false;
+    doc.onsaleDuration = null;
+  }
+  return doc;
+};
+
 exports.getMyProducts = (Model, modelType) =>
   catchAsync(async (req, res, next) => {
-    if (!req.params.id) req.params.id = req.user.id;
+    // SECURITY: always use the authenticated user's id. The old code took
+    // the owner id from req.params.id, so any caller could list another
+    // user's products by guessing their id.
     const docs = await Model.find({
-      owner: req.params.id,
+      owner: req.user.id,
     });
-    if (!docs) {
-      return next(
-        new AppError(`Couldn't find any ${modelType} of yours!`, 400)
-      );
-    }
 
     res.status(200).json({
       status: 'success',
+      results: docs.length,
       data: {
         data: docs,
       },
@@ -40,12 +91,17 @@ exports.updateMyProduct = (Model, modelType, filteredBody) =>
   catchAsync(async (req, res, next) => {
     const allowedFields = filterObj(req.body, ...filteredBody);
 
-    const updatedDoc = await Model.findByIdAndUpdate(
+    // SECURITY: the update only matches a document owned by the caller.
+    // The old code used findByIdAndUpdate({_id}) with no owner filter, so
+    // any authenticated seller could update anyone else's product.
+    const updatedDoc = await Model.findOneAndUpdate(
       {
         _id: req.params.id,
+        owner: req.user.id,
       },
       allowedFields,
       {
+        new: true,
         runValidators: true,
       }
     );
@@ -172,10 +228,18 @@ exports.activateDiscount = (Model) =>
   catchAsync(async (req, res, next) => {
     const offsaleProduct = await Model.findById(req.params.id);
 
-    if (req.body.price > offsaleProduct.price) {
+    if (!offsaleProduct) {
+      return next(new AppError('No product found with that ID', 404));
+    }
+
+    if (
+      typeof req.body.price !== 'number' ||
+      req.body.price <= 0 ||
+      req.body.price > offsaleProduct.price
+    ) {
       return next(
         new AppError(
-          'The discount price can not be higher than the old price!',
+          'The discount price must be a positive number and can not be higher than the old price!',
           400
         )
       );
@@ -207,6 +271,10 @@ exports.activateDiscount = (Model) =>
 exports.deactivateDiscount = (Model) =>
   catchAsync(async (req, res, next) => {
     const onsaleProduct = await Model.findById(req.params.id);
+
+    if (!onsaleProduct) {
+      return next(new AppError('No product found with that ID', 404));
+    }
 
     if (onsaleProduct.onSale !== true) {
       return next(new AppError('You had already removed the discount!', 400));
@@ -247,14 +315,19 @@ exports.deleteMyReviewOrVote = (Model) =>
 
 exports.updateMyReviewOrVote = (Model) =>
   catchAsync(async (req, res, next) => {
+    // Only allow fields that belong on a review / vote. The old code passed
+    // every supplied key through, including keys that do not exist on the
+    // model.
+    const allowedUpdate = filterObj(req.body, [
+      'review',
+      'rating',
+      'comment',
+      'report',
+    ]);
+
     const doc = await Model.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      {
-        review: req.body.review,
-        rating: req.body.rating,
-        comment: req.body.comment,
-        report: req.body.report,
-      },
+      allowedUpdate,
       {
         new: true,
         runValidators: true,
@@ -292,9 +365,16 @@ exports.deleteOne = (Model) =>
     });
   });
 
-exports.updateOne = (Model) =>
+exports.updateOne = (Model, allowedFields) =>
   catchAsync(async (req, res, next) => {
-    const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
+    // If the caller supplies an allowlist, use it; otherwise strip every
+    // field a client must never set via a generic update (see
+    // FORBIDDEN_UPDATE_FIELDS above).
+    const updateData = allowedFields
+      ? filterObj(req.body, ...allowedFields)
+      : stripFields(req.body, FORBIDDEN_UPDATE_FIELDS);
+
+    const doc = await Model.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });
@@ -322,13 +402,8 @@ exports.getOne = (Model, modelType, popOptions) =>
     }
 
     if (modelType === 'product') {
-      if (doc.onSale === true && Date.now() > doc.onsaleDuration) {
-        doc.price = doc.originalPrice;
-        doc.onSale = false;
-        doc.onsaleDuration = null;
-
-        await doc.save();
-      }
+      // Expired sale, computed at read time only (no DB write on a GET).
+      applyExpiredSaleInMemory(doc);
     }
 
     res.status(200).json({
@@ -351,23 +426,25 @@ exports.getAll = (Model, modelType) =>
       .limitFields()
       .paginate();
 
+    // Total matching documents (before pagination), so clients can build
+    // real pagination instead of guessing from the page size.
+    const total = await Model.countDocuments(filter);
+
     const docs = await features.query;
 
     if (modelType === 'product') {
-      docs.forEach(async (product) => {
-        if (product.onSale === true && Date.now() > product.onsaleDuration) {
-          product.price = product.originalPrice;
-          product.onSale = false;
-          product.onsaleDuration = null;
-          await product.save();
-        }
-      });
+      // The old code used docs.forEach(async ...) — the async callbacks
+      // were never awaited, so the response could go out before the
+      // (unwanted) saves finished. Sale expiry is now computed in memory
+      // only, synchronously, before responding.
+      docs.forEach((product) => applyExpiredSaleInMemory(product));
     }
 
     // SEND RESPONSE
     res.status(200).json({
       status: 'success',
       results: docs.length,
+      total,
       data: {
         data: docs,
       },
@@ -403,8 +480,10 @@ exports.checkIfDoneBefore = (rateModel) =>
 
 exports.createMyProduct = (Model, filteredBody) =>
   catchAsync(async (req, res, next) => {
-    req.body.owner = req.user._id;
     const allowedFields = filterObj(req.body, ...filteredBody);
+    // Ownership is decided by the server, after filtering the body —
+    // a client-supplied `owner` in req.body can never win.
+    allowedFields.owner = req.user._id;
 
     const doc = await Model.create(allowedFields);
 
@@ -426,9 +505,17 @@ exports.createMyProduct = (Model, filteredBody) =>
     });
   });
 
-exports.createOne = (Model, modelType) =>
+exports.createOne = (Model, modelType, allowedFields) =>
   catchAsync(async (req, res, next) => {
-    const doc = await Model.create(req.body);
+    // If the caller supplies an allowlist, use it; otherwise strip every
+    // server-computed field (see FORBIDDEN_CREATE_FIELDS). Password and
+    // role are not in that list: they are only accepted by the dedicated
+    // admin user-creation handler, never through this generic factory.
+    const createData = allowedFields
+      ? filterObj(req.body, ...allowedFields)
+      : stripFields(req.body, FORBIDDEN_CREATE_FIELDS);
+
+    const doc = await Model.create(createData);
     if (modelType === 'product') {
       doc.calculateEnvironmentalScore();
       if (doc.environmentalScore >= 10) {
