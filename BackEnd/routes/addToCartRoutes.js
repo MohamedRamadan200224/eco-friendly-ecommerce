@@ -41,12 +41,14 @@ router
     addToCartController.updateItemQuantity
   );
 
+// Creates a Stripe Checkout Session only. It does NOT create an order and
+// does NOT change stock or reward points. The order is created by the
+// Stripe webhook (checkout.session.completed) after the payment is
+// verified — see controller/webhookController.js and routes/webhookRoutes.js.
+// The old route chained completePurchase here with next(), so an order was
+// created (and stock decremented) before any payment had happened.
 router
   .route('/Checkout-session')
-  .get(
-    authController.protect,
-    addToCartController.getCheckoutSession,
-    addToCartController.completePurchase
-  );
+  .get(authController.protect, addToCartController.getCheckoutSession);
 
 module.exports = router;
