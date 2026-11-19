@@ -10,7 +10,6 @@ const reviewRouter = require(`./routes/reviewRoutes`);
 const certificateRouter = require(`./routes/certificationRoutes`);
 const orderRouter = require('./routes/orderRoutes');
 const expertApplyRouter = require('./routes/expertApplyRoutes');
-const schedule = require('node-schedule');
 const addToCartRouter = require('./routes/addToCartRoutes');
 const webhookRouter = require('./routes/webhookRoutes');
 const errorController = require('./controller/errorController');
@@ -20,8 +19,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cors = require('cors');
-const User = require('./models/userModel');
-const Product = require('./models/productModel');
+const compression = require('compression');
 
 // Stripe webhook FIRST, before any body parser: Stripe's signature is
 // computed over the raw request body, and the webhook router applies
@@ -34,7 +32,16 @@ app.use('/api/v1/webhooks/stripe', webhookRouter);
 // limit, and once later with limit '50kb'. Only the limited one remains.
 app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ extended: true }));
+// Perf P0: gzip responses (JSON lists + static images). Registered before
+// the static middleware and the routers so their responses are compressed too.
+app.use(compression());
 app.use('/img', express.static('public/img'));
+
+// Health check for load balancers / Docker / uptime monitors. Not under
+// /api, so it is not rate-limited, and it does not touch the database.
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
 
 // Parse cookies so authController.protect can read the httpOnly `jwt`
 // cookie set on login / signup. (cookie-parser was already a dependency
@@ -78,58 +85,6 @@ app.use(
     whitelist: ['ratingsQuantity', 'ratingsAverage', 'price'],
   })
 );
-
-//serving static files
-// app.use(express.static(`${__dirname}/public`));
-
-//checking expetrs activity
-// Schedule a task to run at the start of every 10 minutes
-const expertJob = schedule.scheduleJob('*/10 * * * *', async () => {
-  // Retrieve all users with the 'expert' role
-  const experts = await User.find({ role: 'expert' });
-
-  // Get the current time
-  const currentTime = new Date();
-
-  // Check each expert's voting activity every 10 minutes
-  for (const expert of experts) {
-    // Check if the expert has voted in the last 10 minutes
-    const timeDifference = (currentTime - new Date(expert.lastVoted)) / 60000; // difference in minutes
-
-    if (timeDifference > 10) {
-      // Downgrade the user's role if they haven't voted in the last 10 minutes
-      expert.role = 'user';
-      await expert.save({ validateBeforeSave: false });
-      console.log(
-        `Expert ${expert.name} has been downgraded to a regular user due to insufficient voting activity.`
-      );
-    }
-  }
-});
-
-//Check if the user is still eligible for the badge
-const certificateJob = schedule.scheduleJob('*/5 * * * *', async () => {
-  // Retrieve all users who are currently certified
-  const certifiedUsers = await User.find({ isCertified: true });
-
-  for (const user of certifiedUsers) {
-    // Count the number of non-harmful products sold by the user
-    const count = await Product.countDocuments({
-      owner: user._id,
-      harmfultoenv: false,
-      soldNum: { $gte: 1 },
-    });
-
-    // If the user has less than 1 non-harmful product, set isCertified to false
-    if (count < 1) {
-      user.isCertified = false;
-      await user.save({ validateBeforeSave: false });
-      console.log(
-        `User ${user.name} is no longer certified due to insufficient non-harmful products.`
-      );
-    }
-  }
-});
 
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/users', userRouter);
