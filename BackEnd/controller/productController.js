@@ -3,16 +3,20 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const handlerFactory = require('./handlerFactory');
 
+// Fields a seller may set when creating / updating their own product.
+// Deliberately NOT included: 'owner' (set server-side from req.user.id),
+// 'harmfultoenv' and 'environmentalScore' (computed server-side by
+// calculateEnvironmentalScore), and the aggregated counters
+// (ratingsAverage / ratingsQuantity / soldNum / reportsNumber /
+// noReportsNumber), which must never be client-settable.
 const filteredBody = [
   'name',
   'specifications',
   'category',
   'price',
-  'owner',
   'stockQuantity',
-  'harmfultoenv',
   'imageCover',
-  'environmentalScore',
+  'images',
 ];
 
 exports.getMyProduct = handlerFactory.getMyProducts(Product);
