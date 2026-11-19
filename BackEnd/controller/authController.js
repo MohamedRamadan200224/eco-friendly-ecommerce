@@ -4,10 +4,16 @@ const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
-const sendEmail = require('./../utils/email');
 const Email = require('./../utils/email');
 
 const signToken = (id) => {
+  if (!process.env.JWT_SECRET) {
+    // Fail loudly instead of signing tokens with an undefined secret.
+    throw new AppError(
+      'JWT_SECRET is not configured. Set it before starting the server.',
+      500
+    );
+  }
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
@@ -19,7 +25,11 @@ const createSendToken = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
+    // httpOnly: JS in the browser (including any injected script) cannot
+    // read the token. The browser sends it automatically with requests
+    // made with credentials (see FrontEnd CartModal / axios calls).
     httpOnly: true,
+    sameSite: 'lax',
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
 
@@ -28,9 +38,12 @@ const createSendToken = (user, statusCode, res) => {
   // Remove password from output
   user.password = undefined;
 
+  // NOTE: the JWT is intentionally NOT returned in the JSON body anymore.
+  // It lives only in the httpOnly cookie. Clients must send requests with
+  // credentials (axios: withCredentials: true) and must not store the
+  // token in sessionStorage / localStorage (see FrontEnd/src/helper/Storage.js).
   res.status(statusCode).json({
     status: 'success',
-    token,
     data: {
       user,
     },
@@ -38,12 +51,15 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
+  // SECURITY: never accept `role` from the request body. A client could
+  // otherwise self-assign 'admin' / 'expert' / 'company' on signup.
+  // Every new account starts as a plain 'user'; role changes are an
+  // admin-only operation through a dedicated endpoint (not yet implemented).
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
-    role: req.body.role,
   });
 
   createSendToken(newUser, 201, res);
@@ -69,8 +85,15 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Getting token and check of it's there
+  // Preferred source: the httpOnly cookie set by createSendToken.
+  // Transitional fallback: Authorization: Bearer <token>. This exists only
+  // so clients that have not been migrated to cookie auth yet keep working;
+  // it should be removed once every frontend caller uses withCredentials.
+  // (requires cookie-parser middleware, registered in app.js)
   let token;
-  if (
+  if (req.cookies && req.cookies.jwt) {
+    token = req.cookies.jwt;
+  } else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
@@ -78,7 +101,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    console.log('No token found in headers');
     return next(
       new AppError('You are not logged in! Please log in to get access.', 401)
     );
@@ -88,16 +110,13 @@ exports.protect = catchAsync(async (req, res, next) => {
   let decoded;
   try {
     decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
   } catch (err) {
-    console.log('Token verification failed:', err);
     return next(new AppError('Invalid token. Please log in again.', 401));
   }
 
   // 3) Check if user still exists
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
-    console.log('User not found with ID:', decoded.id);
     return next(
       new AppError(
         'The user belonging to this token does no longer exist.',
@@ -108,7 +127,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // 4) Check if user changed password after the token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
-    console.log('Password changed after token issuance');
     return next(
       new AppError('User recently changed password! Please log in again.', 401)
     );
@@ -135,8 +153,16 @@ exports.restrictTo = (...roles) => {
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
+
+  // SECURITY: always return the same generic 200, whether or not an
+  // account exists for this email. Returning 404 for unknown emails lets
+  // anyone enumerate registered accounts.
   if (!user) {
-    return next(new AppError('There is no user with email address.', 404));
+    return res.status(200).json({
+      status: 'success',
+      message:
+        'If an account exists for this email, a password reset link has been sent.',
+    });
   }
 
   // 2) Generate the random reset token
@@ -144,27 +170,30 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   // 3) Send it to user's email
-  const resetURL = `${req.protocol}://localhost:5173/resetpassword/${resetToken}`;
-
-  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetURL = `${frontendUrl}/resetpassword/${resetToken}`;
 
   try {
     await new Email(user, resetURL).sendPasswordReset();
 
-    res.status(200).json({
+    return res.status(200).json({
       status: 'success',
-      message: 'Token sent to email!',
+      message:
+        'If an account exists for this email, a password reset link has been sent.',
     });
   } catch (err) {
-    console.log(err);
+    // Email failed: clear the reset token and log server-side, but still
+    // return the generic response so the caller cannot tell the difference.
+    console.error('Failed to send password reset email:', err);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    return next(
-      new AppError('There was an error sending the email. Try again later!'),
-      500
-    );
+    return res.status(200).json({
+      status: 'success',
+      message:
+        'If an account exists for this email, a password reset link has been sent.',
+    });
   }
 });
 
