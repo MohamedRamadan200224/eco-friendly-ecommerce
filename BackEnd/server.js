@@ -9,6 +9,18 @@ process.on('uncaughtException', (err) => {
 
 dotenv.config({ path: './config.env' });
 
+// Fail fast on missing required configuration instead of starting a
+// server that signs JWTs with an undefined secret or cannot reach a DB.
+const requiredEnv = ['DATABASE', 'JWT_SECRET', 'JWT_EXPIRES_IN'];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+if (missingEnv.length > 0) {
+  console.error(
+    `Missing required environment variables: ${missingEnv.join(', ')}. ` +
+      'Copy BackEnd/.env.example to config.env and fill in the values.'
+  );
+  process.exit(1);
+}
+
 const app = require('./app');
 
 const DB = process.env.DATABASE;
