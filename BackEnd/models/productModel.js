@@ -290,6 +290,11 @@ productSchema.virtual('votes', {
   localField: '_id',
 });
 
+// Indexes for the queries this app actually runs: listing a seller's
+// products, and filtering products by category + price.
+productSchema.index({ owner: 1 });
+productSchema.index({ category: 1, price: 1 });
+
 const Product = mongoose.model('Product', productSchema);
 
 module.exports = Product;
