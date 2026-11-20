@@ -17,6 +17,11 @@ router
   .get(productController.getAllProducts)
   .post(
     authController.protect,
+    // Any logged-in user could POST a product straight into the public
+    // catalogue with no owner (the factory strips `owner`), which nobody
+    // could then edit/delete except an admin. Creation is company/admin
+    // only, like the /myProducts section below.
+    authController.restrictTo('company', 'admin'),
     factory.uploadImgs,
     productController.resizeProductImgs,
     productController.createProduct

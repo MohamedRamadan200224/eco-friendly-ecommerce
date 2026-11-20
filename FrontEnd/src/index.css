@@ -43,3 +43,56 @@ body {
 }
 
 /* BUTTONS STYLES */
+
+/* EcoLoader — branded sprouting-seedling loader (see
+   src/components/EcoLoader.jsx). transform-box: fill-box lets each part
+   animate around its own shape instead of the whole SVG. */
+.eco-stem {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: eco-grow 1.4s ease-in-out infinite;
+}
+.eco-leaf-left {
+  transform-box: fill-box;
+  transform-origin: right bottom;
+  animation: eco-sway 1.4s ease-in-out infinite;
+}
+.eco-leaf-right {
+  transform-box: fill-box;
+  transform-origin: left bottom;
+  animation: eco-sway 1.4s ease-in-out infinite reverse;
+}
+.eco-bud {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eco-pulse 1.4s ease-in-out infinite;
+}
+@keyframes eco-grow {
+  0%,
+  100% {
+    transform: scaleY(0.85);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+@keyframes eco-sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+@keyframes eco-pulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}

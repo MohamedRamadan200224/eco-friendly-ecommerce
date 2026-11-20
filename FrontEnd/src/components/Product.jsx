@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getAuthUser } from "../helper/Storage";
 import toast from "react-hot-toast";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "./EcoLoader";
 import api, { imageUrl, handleImgError } from "../api/client";
 import ReviewSection from "./reviews/ReviewSection";
 import VoteSection from "./reviews/VoteSection";
@@ -113,11 +113,7 @@ const Product = () => {
       <section className="py-12 sm:py-16">
         <div className="container px-4 mx-auto">
           {product.loading === true && (
-            <ClipLoader
-              className="color-cold-blue my-2"
-              loading={true}
-              size={70}
-            />
+            <EcoLoader label="Growing this product…" />
           )}
           {}
           <div className="grid grid-cols-1 gap-12 mt-8 lg:col-gap-12 xl:col-gap-16 lg:mt-12 lg:grid-cols-5 lg:gap-16">
@@ -245,14 +241,23 @@ const Product = () => {
                   <div className="flex flex-col items-center justify-between py-4 mt-10 space-y-4 border-t border-b sm:flex-row sm:space-y-0">
                     <div className="flex items-end">
                       <h1 className="text-3xl font-bold">
-                        &pound;{product.result.price}
+                        ${product.result.price}
                       </h1>
-                      <h1
-                        style={{ "text-decoration": "line-through" }}
-                        className="mb-2 text-bold text-[18px] font-light leading-[1.67rem] text-cold-blue xl:w-[70%] pl-2"
-                      >
-                        {product.result.originalPrice}
-                      </h1>
+                      {/* Struck-through original price ONLY on a real
+                          sale. The old code rendered it unconditionally,
+                          so a product at full price showed the same number
+                          struck through beside itself. Currency is $ to
+                          match the cart and Stripe (USD). */}
+                      {product.result.onSale === true &&
+                        product.result.originalPrice >
+                          product.result.price && (
+                          <h1
+                            style={{ "text-decoration": "line-through" }}
+                            className="mb-2 text-bold text-[18px] font-light leading-[1.67rem] text-cold-blue xl:w-[70%] pl-2"
+                          >
+                            ${product.result.originalPrice}
+                          </h1>
+                        )}
                     </div>
 
                     {/* Logged-in check is the stored user, not getAuthToken():

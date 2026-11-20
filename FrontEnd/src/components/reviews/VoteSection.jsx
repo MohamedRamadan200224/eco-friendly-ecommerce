@@ -15,7 +15,7 @@
 // the httpOnly cookie now, and getAuthToken() returns undefined anyway.
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../EcoLoader";
 import api, { userImageUrl } from "../../api/client";
 import Pagination from "../Pagination";
 
@@ -186,11 +186,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
   return (
     <>
       {(comments.loading === true || comment.loading === true) && (
-        <ClipLoader
-          className="color-cold-blue my-2"
-          loading={true}
-          size={70}
-        />
+        <EcoLoader label="Watering the comments…" />
       )}
 
       {comments.loading === false && (

@@ -20,7 +20,7 @@ import { GoPlus } from "react-icons/go";
 import Modal from "../components/Modal";
 import { getAuthUser } from "../helper/Storage";
 import { FaMedal } from "react-icons/fa";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../components/EcoLoader";
 import api, { imageUrl, handleImgError } from "../api/client";
 import { useApiList } from "../hooks/useApiList";
 import Pagination from "../components/Pagination";
@@ -154,11 +154,7 @@ const Products = () => {
           </div>
         )}
         {products.loading === true && (
-          <ClipLoader
-            className="color-cold-blue my-2"
-            loading={true}
-            size={70}
-          />
+          <EcoLoader label="Growing your products…" />
         )}
 
         <div className="grid gap-4 mt-10 cursor-pointer sm:grid-cols-2 md:grid-cols-4">
@@ -184,7 +180,20 @@ const Products = () => {
                       className="absolute top-0 left-0 tracking-wider text-white bg-green-400 px-4 py-1 text-sm rounded leading-loose mx-2 my-2 font-semibold"
                       title=""
                     >
-                      <span className="align-middle">{(duct.price*100/duct.originalPrice).toFixed(0)}% OFF</span>
+                      <span className="align-middle">
+                        {/* Percent OFF: (1 - price / original) * 100. The
+                            old formula (price * 100 / original) was the
+                            price *as a percentage of* the original, so a
+                            $32,000 car on a $35,000 original showed
+                            "91% OFF" instead of 9%. */}
+                        {duct.originalPrice > 0
+                          ? (
+                              (1 - duct.price / duct.originalPrice) *
+                              100
+                            ).toFixed(0)
+                          : 0}
+                        % OFF
+                      </span>
                     </span>
                   )}
 

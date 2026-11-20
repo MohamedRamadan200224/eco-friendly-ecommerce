@@ -8,7 +8,7 @@
 // All requests go through the shared api client (cookie auth, one shared
 // error toast). Image URLs are built with the client's imageUrl helper,
 // not a hardcoded localhost string.
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../EcoLoader";
 import api, { imageUrl, handleImgError } from "../../api/client";
 import { useApiList } from "../../hooks/useApiList";
 import Pagination from "../Pagination";
@@ -22,11 +22,7 @@ const MyOrders = () => {
   return (
     <>
       {orders.loading === true && (
-        <ClipLoader
-          className="color-cold-blue my-2"
-          loading={true}
-          size={70}
-        />
+        <EcoLoader label="Loading your orders…" />
       )}
 
       {orders.loading === false && orders.results.length === 0 && (

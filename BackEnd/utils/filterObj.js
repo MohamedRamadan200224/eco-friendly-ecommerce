@@ -41,9 +41,15 @@ const multerFilter = (req, file, cb) => {
 // One shared upload instance. Callers pick the shape they need:
 // upload.single('photo') (userController) or upload.fields([...])
 // (handlerFactory.uploadImgs).
+//
+// 5 MB per file: the old instance had no size limit, so a huge upload
+// could sit in memory (memoryStorage) until the function ran out of it.
+// Multer raises LIMIT_FILE_SIZE for oversize files; errorController
+// converts it to a 400 with a readable message.
 const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 module.exports = { filterObj, multerStorage, multerFilter, upload };
