@@ -78,9 +78,6 @@ const Navbar = () => {
               <RiShoppingCartLine color="green" size={20} />
             </button>
           )}
-          {showCartModal === true && (
-            <CartModal onClose={() => setShowCartModal(false)} />
-          )}
         </div>
       </div>
 
@@ -91,7 +88,11 @@ const Navbar = () => {
           <Link to="/profile">
             <CgProfile size={24} color="green" />
           </Link>
-          <RiShoppingCartLine color="green" size={24} />
+          {auth && (user.role === "user" || user.role === "expert") && (
+            <button onClick={() => setShowCartModal(true)}>
+              <RiShoppingCartLine color="green" size={24} />
+            </button>
+          )}
           <span onClick={handleNav}>
             {nav ? <AiOutlineClose size={24} /> : <AiOutlineMenu size={24} />}
           </span>
@@ -124,6 +125,13 @@ const Navbar = () => {
           </ul>
         </div>
       </div>
+
+      {/* Rendered at the nav root so it is not hidden on mobile: it used
+          to live inside the `hidden lg:flex` desktop container, so the
+          cart modal was display: none below the lg breakpoint. */}
+      {showCartModal === true && (
+        <CartModal onClose={() => setShowCartModal(false)} />
+      )}
     </nav>
   );
 };

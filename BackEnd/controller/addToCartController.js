@@ -144,17 +144,18 @@ exports.getMyCartItems = catchAsync(async (req, res, next) => {
     user: req.user._id,
   });
 
-  // The old code accessed cartItems[0].products BEFORE checking whether
-  // the cart existed, crashing with "Cannot read properties of undefined"
-  // on an empty cart.
-  if (cartItems.length === 0 || cartItems[0].products.length === 0) {
-    return next(new AppError("You don't have any items in your cart!", 400));
-  }
+  // An empty cart is a normal state, not an error. The old code answered
+  // 400 here, so the cart modal's refetch after deleting the last item
+  // failed and the just-deleted items stayed visible forever (ghost cart).
+  // Items whose product was deleted from the catalogue (populate yields
+  // product: null) are filtered out instead of crashing the modal.
+  const products = (cartItems[0]?.products || []).filter(
+    (item) => item.product
+  );
 
   let totalPrice = 0;
 
-  cartItems[0].products.forEach((item) => {
-    if (!item.product) return;
+  products.forEach((item) => {
     // Total is price x quantity, not just the unit price.
     totalPrice += item.product.price * item.quantity;
   });
@@ -162,7 +163,7 @@ exports.getMyCartItems = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     totalPrice,
-    data: cartItems[0].products,
+    data: products,
   });
 });
 
