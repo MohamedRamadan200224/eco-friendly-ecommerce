@@ -83,7 +83,10 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     return next(new AppError("Couldn't deactivate your account", 400));
   }
 
-  res.status(204).json({
+  // 200, not 204: a 204 response carries no body, so the frontend's
+  // resp.data.status check could never be "success" and the toast never
+  // showed — the user clicked and nothing visibly happened.
+  res.status(200).json({
     status: 'success',
     data: null,
   });

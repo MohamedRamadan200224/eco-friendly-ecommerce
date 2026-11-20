@@ -240,8 +240,27 @@ async function importSeedData() {
   );
   // Every seeded product belongs to the demo company (seller) user.
   // The mock's owner strings ("user123", ...) were placeholders.
+  // `onsaleDuration` in the JSON is a DAY-COUNT (30 / 15 / 10) — the
+  // number of days the sale runs from seeding. The schema stores a
+  // timestamp (see activateDiscount), so convert it here: storing the
+  // raw day-count would make applyExpiredSaleInMemory treat the sale as
+  // expired on first read (Date.now() > 30) and every seeded on-sale
+  // product would come back at full price with onSale false.
   const products = await Product.insertMany(
-    productsData.map((product) => ({ ...product, owner: companyUser._id }))
+    productsData.map((product) => {
+      const saleDays =
+        product.onSale === true &&
+        typeof product.onsaleDuration === 'number'
+          ? product.onsaleDuration
+          : null;
+      return {
+        ...product,
+        owner: companyUser._id,
+        onsaleDuration: saleDays
+          ? Date.now() + saleDays * 24 * 60 * 60 * 1000
+          : product.onsaleDuration,
+      };
+    })
   );
   const productsByName = Object.fromEntries(
     products.map((product) => [product.name, product])

@@ -14,7 +14,7 @@
 // the httpOnly cookie now, and getAuthToken() returns undefined anyway.
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../EcoLoader";
 import api, { userImageUrl } from "../../api/client";
 import Pagination from "../Pagination";
 
@@ -26,7 +26,27 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const [currentRevPage, setCurrentRevPage] = useState(1);
   const [reviewsPerPage] = useState(10);
-  const [editRev, setEditRev] = useState(false);
+  // Per-review edit state (not one global boolean): opening the edit box
+  // on one review must not open it on every review at once.
+  const [editingRevId, setEditingRevId] = useState(null);
+  // The edit form's own state, prefilled from the review being edited.
+  // The old code sent the *create-form* state (rating 0, review "") on
+  // update, so saving an edit failed validation unless the user re-typed
+  // the whole text and re-clicked the stars.
+  const [editForm, setEditForm] = useState({ review: "", rating: 0 });
+
+  const openEdit = (rev) => {
+    setEditingRevId(rev._id);
+    setEditForm({ review: rev.review, rating: rev.rating });
+    setRating(rev.rating);
+  };
+
+  const closeEdit = () => {
+    setEditingRevId(null);
+    setEditForm({ review: "", rating: 0 });
+    setRating(0);
+    setHoverRating(0);
+  };
 
   const [reviews, setReviews] = useState({
     results: [],
@@ -82,6 +102,19 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
   const HandleSubmit = (e) => {
     e.preventDefault();
 
+    // Client-side validation: the backend requires rating >= 1 and a
+    // non-empty review, so check before posting instead of failing
+    // silently (the old code posted rating 0 / "" and only the error
+    // toast said anything).
+    if (review.rating < 1) {
+      toast.error("Please pick a star rating first.");
+      return;
+    }
+    if (!review.review.trim()) {
+      toast.error("Please write your review first.");
+      return;
+    }
+
     setReview({ ...review, loading: true });
     api
       .post(`/api/v1/products/${productId}/review`, {
@@ -98,6 +131,7 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
           loading: false,
           reload: review.reload + 1,
         });
+        toast.success("Review posted successfully.");
         showRev();
       })
       .catch(() => {
@@ -130,6 +164,11 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
         });
         setRating(0);
         setHoverRating(0);
+        toast.success("Review deleted successfully.");
+        // Refresh the list: the old code only set state and never
+        // re-fetched, so the deleted review stayed on screen and the
+        // user concluded the delete had not worked.
+        showRev();
       })
       .catch(() => {
         setReviews({
@@ -143,10 +182,22 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
 
   const updateReview = (e, revId) => {
     e.preventDefault();
+    // Validate the *edit* form's own state (see openEdit): the old code
+    // sent the create-form state, which is rating 0 / "" on a fresh page
+    // load, so the PATCH failed the schema's rating >= 1 / non-empty
+    // review rules.
+    if (editForm.rating < 1) {
+      toast.error("Please pick a star rating first.");
+      return;
+    }
+    if (!editForm.review.trim()) {
+      toast.error("Please write your review first.");
+      return;
+    }
     api
       .patch(reviewEndpoint(revId), {
-        rating: review.rating,
-        review: review.review,
+        rating: editForm.rating,
+        review: editForm.review,
       })
       .then((resp) => {
         statusRef.current = resp.data.status;
@@ -156,9 +207,11 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
           loading: false,
           reload: reviews.reload + 1,
         });
-        setRating(0);
-        setHoverRating(0);
-        setEditRev(false);
+        closeEdit();
+        toast.success("Review updated successfully.");
+        // Refresh the list: without this the updated review kept showing
+        // its old text until the tab was clicked again.
+        showRev();
       })
       .catch(() => {
         setReviews({
@@ -190,11 +243,7 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
   return (
     <>
       {(reviews.loading === true || review.loading === true) && (
-        <ClipLoader
-          className="color-cold-blue my-2"
-          loading={true}
-          size={70}
-        />
+        <EcoLoader label="Watering the reviews…" />
       )}
 
       {reviews.loading === false && (
@@ -246,7 +295,7 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                               (user && user.role === "admin")) && (
                               <>
                                 <button
-                                  onClick={() => setEditRev(true)}
+                                  onClick={() => openEdit(rev)}
                                   className="text-md font-bold cursor-pointer hover:text-green-600 text-green-500 ml-4"
                                 >
                                   Update
@@ -260,10 +309,10 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                               </>
                             )}
                           </div>
-                          {editRev === true ? (
+                          {editingRevId === rev._id ? (
                             <div className=" w-full my-2 mx-2 items-center">
                               <button
-                                onClick={() => setEditRev(false)}
+                                onClick={closeEdit}
                                 className="float-right text-lg font-bold cursor-pointer text-red-400 hover:text-red-500"
                               >
                                 X
@@ -276,7 +325,7 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                                       key={i}
                                       className={`block w-6 h-6 text-gray-400 align-middle hover:text-yellow-500 ${
                                         ratingValue <=
-                                        (hoverRating || rating)
+                                        (hoverRating || editForm.rating)
                                           ? "text-yellow-500"
                                           : ""
                                       }`}
@@ -289,8 +338,8 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                                       onMouseLeave={() => setHoverRating(0)}
                                       onClick={() => {
                                         setRating(ratingValue);
-                                        setReview({
-                                          ...review,
+                                        setEditForm({
+                                          ...editForm,
                                           rating: ratingValue,
                                         });
                                       }}
@@ -307,9 +356,10 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                                   placeholder="Write your Review here"
                                   cols="30"
                                   rows="6"
+                                  value={editForm.review}
                                   onChange={(e) =>
-                                    setReview({
-                                      ...review,
+                                    setEditForm({
+                                      ...editForm,
                                       review: e.target.value,
                                     })
                                   }

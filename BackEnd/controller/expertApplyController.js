@@ -87,20 +87,13 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
     });
   }
 
+  // The application STAYS in the list with its new status. The old code
+  // called next() here into clearApplication, which deleted the record
+  // right after updating it — the admin saw "Successfully approved" and
+  // the application vanished. Deleting is a separate explicit action
+  // (DELETE /:id → deleteApplication above).
   res.status(200).json({
     status: 'success',
     data: application,
   });
-  next();
-});
-
-exports.clearApplication = catchAsync(async (req, res, next) => {
-  const application = await ExpertApply.findByIdAndDelete(req.params.id);
-
-  if (!application) {
-    return next(
-      new AppError('There is no application with that application', 400)
-    );
-  }
-  next();
 });

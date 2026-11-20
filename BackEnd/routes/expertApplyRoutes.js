@@ -26,8 +26,7 @@ router
   .patch(
     authController.protect,
     authController.restrictTo('admin'),
-    expertApplyController.updateApplicationStatus,
-    expertApplyController.clearApplication
+    expertApplyController.updateApplicationStatus
   )
   .delete(
     authController.protect,

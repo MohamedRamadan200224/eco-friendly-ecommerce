@@ -5,17 +5,7 @@ import { IoMdCloseCircleOutline } from "react-icons/io";
 // Auth is cookie-based: the backend sets an httpOnly `jwt` cookie and
 // axios calls use withCredentials. No token is read from storage here.
 import PropTypes from "prop-types";
-// import { useStripe } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-import { ClipLoader } from "react-spinners";
-
-// Publishable key only (safe to expose in the browser), read from the
-// environment. Set VITE_STRIPE_PUBLISHABLE_KEY in FrontEnd/.env — see
-// FrontEnd/.env.example. Checkout is disabled if it is not configured.
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripePublishableKey
-  ? loadStripe(stripePublishableKey)
-  : null;
+import EcoLoader from "./EcoLoader";
 
 // API base URL from the environment (defaults to the local backend).
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -23,7 +13,11 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const CartModal = ({ onClose }) => {
   const respStatus1 = useRef("fail");
   const [totalPrice, setTotalPrice] = useState(0);
-  // const stripe = useStripe();
+  // In-flight guard for checkout: double-clicking used to create two
+  // Stripe sessions. The ref stays set after a successful redirect
+  // (we navigate away); it is cleared again only on failure.
+  const checkingOutRef = useRef(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const [cart, setCart] = useState({
     results: [],
@@ -225,24 +219,29 @@ const CartModal = ({ onClose }) => {
   };
 
   const handleCheckout = async () => {
-    if (!stripePromise) {
-      toast.error("Checkout is not configured. Please try again later.");
-      return;
+    if (checkingOutRef.current) return;
+    checkingOutRef.current = true;
+    setCheckingOut(true);
+    try {
+      const resp = await axios.get(
+        `${API_URL}/api/v1/addToCart/Checkout-session`,
+        {
+          withCredentials: true,
+        }
+      );
+      // Navigate straight to the session URL. The old code used the
+      // deprecated stripe.redirectToCheckout({ sessionId }), which only
+      // works when the publishable key belongs to the same Stripe account
+      // and mode (test/live) as the secret key that created the session —
+      // a mismatch shows Stripe's "Something went wrong" page, and the
+      // { error } redirectToCheckout resolves with was ignored, so the
+      // failure was silent. The session URL needs no publishable key.
+      window.location.href = resp.data.session.url;
+    } catch {
+      checkingOutRef.current = false;
+      setCheckingOut(false);
+      toast.error("Failed to initiate checkout. Please try again.");
     }
-    const stripe = await stripePromise;
-    axios.get(`${API_URL}/api/v1/addToCart/Checkout-session`, {
-      withCredentials: true,
-    })
-      .then(async (resp) => {
-        const sessionId = resp.data.session.id;
-        // When the customer clicks on the button, redirect them to Checkout.
-        await stripe.redirectToCheckout({
-          sessionId,
-        });
-      })
-      .catch(() => {
-        toast.error("Failed to initiate checkout. Please try again.");
-      });
   };
 
   return (
@@ -268,11 +267,7 @@ const CartModal = ({ onClose }) => {
 
               <div className="max-w-2xl mx-auto mt-8 md:mt-12">
                 {cart.loading === true && (
-                  <ClipLoader
-                    className="color-cold-blue my-2"
-                    loading={true}
-                    size={70}
-                  />
+                  <EcoLoader label="Loading your cart…" />
                 )}
                 {cart.loading === false && cart.results.length > 0 && (
                   <div className="bg-white rounded-md shadow">
@@ -395,9 +390,10 @@ const CartModal = ({ onClose }) => {
                         <button
                           type="button"
                           onClick={handleCheckout}
-                          className="inline-flex items-center justify-center w-full px-6 py-4 text-lg font-semibold text-white transition-all duration-200 ease-in-out bg-gray-900 rounded-md group focus:shadow hover:bg-gray-800"
+                          disabled={checkingOut}
+                          className="inline-flex items-center justify-center w-full px-6 py-4 text-lg font-semibold text-white transition-all duration-200 ease-in-out bg-gray-900 rounded-md group focus:shadow hover:bg-gray-800 disabled:opacity-60"
                         >
-                          Checkout
+                          {checkingOut ? "Redirecting…" : "Checkout"}
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="w-6 h-6 ml-4 transition-all group-hover:ml-8"

@@ -18,7 +18,7 @@
 import { useState } from "react";
 import { MdDelete } from "react-icons/md";
 import { FaEye, FaCheck, FaTimes } from "react-icons/fa";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../EcoLoader";
 import toast from "react-hot-toast";
 import api from "../../api/client";
 import { useApiList } from "../../hooks/useApiList";
@@ -69,11 +69,7 @@ const ExpertsList = () => {
   return (
     <>
       {applications.loading === true && (
-        <ClipLoader
-          className="color-cold-blue my-2"
-          loading={true}
-          size={70}
-        />
+        <EcoLoader label="Loading applications…" />
       )}
 
       {applications.loading === false && applications.results.length === 0 && (

@@ -22,6 +22,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import api, { imageUrl, handleImgError } from "../api/client";
+import EcoLoader from "../components/EcoLoader";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -101,6 +102,9 @@ const Home = () => {
             Browse our Products
           </h1>
         </div>
+        {products.loading === true && (
+          <EcoLoader label="Growing featured products…" />
+        )}
         <div className="grid gap-4 mt-10 cursor-pointer sm:grid-cols-2 md:grid-cols-4">
           {products.results.length > 0 &&
             products.results.map((product) => (

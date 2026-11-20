@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import { TbViewportWide } from "react-icons/tb";
 import { MdEdit } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../EcoLoader";
 import toast from "react-hot-toast";
 import api, { imageUrl, handleImgError } from "../../api/client";
 import { useApiList } from "../../hooks/useApiList";
@@ -63,11 +63,7 @@ const MyProducts = ({ user }) => {
   return (
     <>
       {products.loading === true && (
-        <ClipLoader
-          className="color-cold-blue my-2"
-          loading={true}
-          size={70}
-        />
+        <EcoLoader label="Loading your products…" />
       )}
 
       {products.loading === false && (

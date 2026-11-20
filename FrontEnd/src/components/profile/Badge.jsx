@@ -17,7 +17,11 @@ const Badge = () => {
       .get(`/api/v1/applyCertificate`)
       .then((resp) => {
         if (resp.data.status === "success") {
-          toast.success("Applied For Badge Successfully");
+          // Only claim what actually happens: the badge itself is granted
+          // (isCertified is set). The certificate email is generated with
+          // puppeteer, which cannot run on the Vercel hosting, so no email
+          // is ever sent — the old toast implied otherwise.
+          toast.success("Eco-Friendly Badge Granted!");
         }
       })
       .catch(() => {
@@ -28,9 +32,9 @@ const Badge = () => {
   return (
     <div className="text-center lg:text-start">
       <p className="mb-3 text-cold-blue">
-        You need to purchase at least
+        You need to have sold at least
         <span className="text-xl font-semibold text-green-600">
-          &nbsp;2 eco-friendly products&nbsp;
+          &nbsp;1 eco-friendly product&nbsp;
         </span>
         to apply for this badge.
       </p>

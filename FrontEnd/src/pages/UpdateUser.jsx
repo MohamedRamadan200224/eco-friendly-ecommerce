@@ -57,7 +57,12 @@ const UpdateUser = () => {
     const formData = new FormData();
     formData.append("name", user.result.name);
     formData.append("email", user.result.email);
-    formData.append("photo", user.result.photo);
+    // Only append a photo when the admin actually picked a file. The old
+    // code appended whatever was in state — the existing photo URL string
+    // (or the literal string "null") — as the photo field.
+    if (user.result.photo instanceof File) {
+      formData.append("photo", user.result.photo);
+    }
 
     api
       .patch(`/api/v1/users/${id}`, formData)

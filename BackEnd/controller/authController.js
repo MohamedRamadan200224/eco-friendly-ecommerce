@@ -93,6 +93,23 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+// Log out: clear the httpOnly `jwt` cookie. The old frontend Logout only
+// cleared sessionStorage, so the 90-day cookie stayed valid and API calls
+// made with credentials stayed authenticated after "logout". The cookie
+// must be cleared with the same SameSite / Secure options it was set
+// with, or the browser keeps the old one.
+exports.logout = (req, res) => {
+  const cookieOptions = {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  };
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+  res.cookie('jwt', 'loggedout', cookieOptions);
+  res.status(200).json({ status: 'success' });
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Getting token and check of it's there
   // Preferred source: the httpOnly cookie set by createSendToken.

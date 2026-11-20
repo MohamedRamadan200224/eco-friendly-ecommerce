@@ -27,6 +27,8 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 
 router.use(authController.protect);
 
+router.post('/logout', authController.logout);
+
 router.patch(
   '/updateMyPassword',
 
@@ -63,7 +65,16 @@ router.route('/').get(userController.getAllUsers);
 router
   .route('/:id')
   .get(userController.getUser)
-  .patch(userController.updateUser)
+  .patch(
+    // The admin edit form sends multipart FormData. Without the multer
+    // middleware express.json() / urlencoded() cannot parse it, so
+    // req.body arrived as {} and updateOne changed nothing — while still
+    // returning 200, so the UI reported success. Same middleware pair as
+    // POST / and PATCH /updateMe.
+    userController.uploadSinglePhoto,
+    userController.resizeUserPhoto,
+    userController.updateUser
+  )
   .delete(userController.deleteUser);
 
 module.exports = router;
