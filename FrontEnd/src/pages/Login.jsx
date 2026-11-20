@@ -124,47 +124,6 @@ const Login = () => {
               onChange={(e) => setLogin({ ...login, password: e.target.value })}
             />
 
-            <div className="flex justify-between">
-              <div className="flex items-center"></div>
-              {forgot === true ? (
-                <div className=" w-full my-2 mx-2 items-center">
-                  <button
-                    onClick={() => setForgot(false)}
-                    className="float-right text-lg font-bold cursor-pointer text-red-400 hover:text-red-500"
-                  >
-                    X
-                  </button>
-
-                  <div>
-                    <input
-                      type="text"
-                      className="h-[50px] rounded-[200px] border border-cold-blue px-[20px] py-[12px]"
-                      placeholder="Email*"
-                      required
-                      name="email"
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="float-right">
-                    <input
-                      type="submit"
-                      value="Post Review"
-                      onClick={forgotPass}
-                      className="relative inline-flex items-center justify-center w-auto h-10 max-w-full px-4 overflow-hidden text-sm font-medium text-center text-white normal-case whitespace-pre bg-green-600 rounded-md outline-none opacity-100 cursor-pointer focus:ring"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setForgot(true)}
-                  className="text-sm text-light-orange"
-                >
-                  Forget Password?
-                </button>
-              )}
-            </div>
-
             <div className="flex flex-col gap-5">
               <input
                 type="submit"
@@ -180,6 +139,56 @@ const Login = () => {
               </button>
             </div>
           </form>
+
+          {/* Forgot password is a SEPARATE form, not a block inside the
+              login form. It used to live inside the login form with a
+              second input also named "email", so pressing Enter in the
+              reset email field submitted the LOGIN form instead of the
+              reset — the login then went out with the wrong/empty email
+              and came back 401 "Incorrect email or password". The reset
+              submit was also mislabelled with a review-related label. */}
+          {forgot === true ? (
+            <form onSubmit={forgotPass} className="flex flex-col gap-3 mt-6">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-cold-blue">
+                  Reset your password
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setForgot(false)}
+                  className="text-lg font-bold cursor-pointer text-red-400 hover:text-red-500"
+                >
+                  X
+                </button>
+              </div>
+
+              <input
+                type="text"
+                className="h-[50px] rounded-[200px] border border-cold-blue px-[20px] py-[12px]"
+                placeholder="Email for reset link*"
+                required
+                name="resetEmail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
+              <div className="float-right">
+                <input
+                  type="submit"
+                  value="Send reset link"
+                  className="relative inline-flex items-center justify-center w-auto h-10 max-w-full px-4 overflow-hidden text-sm font-medium text-center text-white normal-case whitespace-pre bg-green-600 rounded-md outline-none opacity-100 cursor-pointer focus:ring"
+                />
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setForgot(true)}
+              className="text-sm text-light-orange mt-6"
+            >
+              Forget Password?
+            </button>
+          )}
         </div>
       </section>
     </>
