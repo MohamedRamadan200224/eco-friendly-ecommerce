@@ -29,7 +29,17 @@ const createSendToken = (user, statusCode, res) => {
     // read the token. The browser sends it automatically with requests
     // made with credentials (see FrontEnd CartModal / axios calls).
     httpOnly: true,
-    sameSite: 'lax',
+    // Cross-site cookie: the frontend (eco-friendly-ecommerce.vercel.app)
+    // and this API (eco-backend-gamma.vercel.app) are different sites
+    // (vercel.app is a public suffix), so a SameSite=Lax cookie is never
+    // stored or sent by the browser on cross-site fetch calls and login
+    // never sticks in a real browser. API clients like curl don't enforce
+    // SameSite, which is why login looked fine in every API test.
+    // Production therefore needs SameSite=None, which browsers only accept
+    // with Secure (set below). Locally the app runs on localhost
+    // (same-site), where Lax is correct — None without Secure would be
+    // rejected by the browser.
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
 
