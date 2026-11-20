@@ -43,6 +43,32 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
 
+// One-time seed endpoint — TEMPORARY, remove it once the Atlas DB is seeded.
+// The sandbox cannot reach Atlas (its egress proxy breaks non-HTTPS TLS),
+// so the seed has to run inside the deployed backend. Protected by the
+// SEED_TOKEN env var (Vercel); without it, or with a wrong token, 403.
+app.post('/seed', async (req, res, next) => {
+  try {
+    if (
+      !process.env.SEED_TOKEN ||
+      req.headers['x-seed-token'] !== process.env.SEED_TOKEN
+    ) {
+      return res.status(403).json({ status: 'fail', message: 'Forbidden' });
+    }
+    const { importSeedData } = require('./dev-data/seed');
+    await importSeedData();
+    const counts = {
+      users: await require('./models/userModel').countDocuments(),
+      products: await require('./models/productModel').countDocuments(),
+      reviews: await require('./models/reviewModel').countDocuments(),
+      votes: await require('./models/voteModel').countDocuments(),
+    };
+    res.status(200).json({ status: 'success', data: counts });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Parse cookies so authController.protect can read the httpOnly `jwt`
 // cookie set on login / signup. (cookie-parser was already a dependency
 // but was never registered as middleware.)
