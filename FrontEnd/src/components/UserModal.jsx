@@ -1,4 +1,3 @@
-import React from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 
 const UserModal = ({ onClose }) => {

@@ -1,9 +1,11 @@
-import axios from "axios";
-import React, { useRef } from "react";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
-import { getAuthToken } from "../helper/Storage";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
@@ -14,27 +16,21 @@ const DeleteModal = ({ onClose, id }) => {
     onClose: PropTypes.func.isRequired,
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired, // or PropTypes.number, depending on what type your id is
   };
-  const auth = getAuthToken();
   const navigate = useNavigate();
-  console.log(id);
 
   const removeItem = (e) => {
     e.preventDefault();
 
-    axios
-      .delete(`http://localhost:3000/api/v1/products/myProducts/${id}`, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    api
+      .delete(`/api/v1/products/myProducts/${id}`)
       .then((resp) => {
         if (resp.data.status === "success") {
           toast.success("Deleted Successfully");
         }
         navigate("/profile");
       })
-      .catch((err) => {
-        toast.error(err.response.data.message);
+      .catch(() => {
+        // Error already toasted once by the api client interceptor.
       });
   };
 

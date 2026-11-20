@@ -1,4 +1,3 @@
-import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, FreeMode, Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -8,7 +7,6 @@ import Person1 from "../../public/person_1.jpg.webp";
 import Person2 from "../../public/person_2.jpg.webp";
 import Person3 from "../../public/person_3.jpg.webp";
 import Cards from "./Cards";
-import { FaHandHoldingHeart } from "react-icons/fa";
 
 const Testimonials = () => {
   return (

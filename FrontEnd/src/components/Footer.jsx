@@ -1,10 +1,9 @@
-import React from "react";
 import { FaFacebookSquare, FaInstagram, FaTwitterSquare } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { getAuthToken } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const Footer = () => {
-  const auth = getAuthToken();
+  const user = getAuthUser();
   return (
     <footer className="mt-[100px] bg-[url('/bg_footer.png')] bg-cover bg-no-repeat 2xl:relative">
       <div className="grid gap-8 px-4 pt-12 text-gray-300 max-container padding-container lg:grid-cols-3">
@@ -37,7 +36,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          {!auth && (
+          {!user && (
             <div>
               <h6 className="text-sm font-bold text-green-600">Support</h6>
               <ul>

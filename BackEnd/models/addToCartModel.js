@@ -20,7 +20,10 @@ const addToCartSchema = new mongoose.Schema({
   ],
   createdAt: {
     type: Date,
-    default: new Date(),
+    // Date.now (the function) is evaluated per document. The old
+    // `default: new Date()` was evaluated once, when this file was
+    // loaded, so every document got the server's start time.
+    default: Date.now,
   },
 });
 

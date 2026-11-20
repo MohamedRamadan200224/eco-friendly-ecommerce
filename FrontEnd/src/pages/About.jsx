@@ -1,4 +1,3 @@
-import React from "react";
 import Header from "../components/Header";
 import Vision from "../components/Vision";
 import Team from "../components/Team";

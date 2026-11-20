@@ -1,97 +1,17 @@
+// Shared static content for the frontend.
+//
+// NOTE: the dummy PRODUCTS catalogue that used to live here was deleted
+// (clean-code pass, 2026-11-19). The frontend no longer ships mock data:
+// the catalogue comes from the real API, and the demo catalogue lives in
+// the database (see the backend seed script). Only genuinely static
+// content remains here.
+
 // NAVIGATION
 export const NAV_LINKS = [
   { href: "/", key: "home", label: "Home" },
   { href: "/products", key: "products", label: "Products" },
   { href: "/contact-us", key: "contact", label: "Contact" },
   { href: "/about", key: "about", label: "About" },
-];
-
-//FEATURED PRODUCTS
-export const PRODUCTS = [
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Electronics",
-    key: "_id1",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Cloth",
-    key: "_id2",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Cars",
-    key: "_id3",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Food",
-    key: "_id4",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Food",
-    key: "_id5",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Food",
-    key: "_id6",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Food",
-    key: "_id7",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Food",
-    key: "_id8",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Cars",
-    key: "_id9",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Cloth",
-    key: "_id10",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Cloth",
-    key: "_id11",
-  },
-  {
-    img: "https://dummyimage.com/420x260",
-    label: "Product Name",
-    price: "Product Price",
-    category: "Electronics",
-    key: "_id12",
-  },
 ];
 
 export const TEAM = [

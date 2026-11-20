@@ -1,10 +1,15 @@
 const Review = require('./../models/reviewModel');
 const factory = require('./handlerFactory');
-const User = require('./../models/userModel');
 
 exports.getReviewUserId = (req, res, next) => {
   if (!req.body.user) req.body.user = req.user.id;
-  if (!req.body.review) req.body.review = req.params.reviewId;
+  // NOTE: the old code also did `req.body.review = req.params.reviewId`.
+  // That param does not exist on these routes (the param is :id), so it
+  // always stuffed `undefined` into the review-text field — and with the
+  // filterObj fix in handlerFactory.updateMyReviewOrVote, that undefined
+  // would have ridden along into the update. The factory identifies the
+  // review from req.params.id + req.user._id, so nothing here needs the
+  // review id in the body. Line removed, not renamed.
   next();
 };
 

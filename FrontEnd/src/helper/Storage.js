@@ -5,7 +5,7 @@
 // in sessionStorage / localStorage is readable by any script running on
 // the page, so storing a JWT there makes it stealable via XSS.
 export const setAuthUser = (data) => {
-  // save object to the local storage
+  // Save the user object to sessionStorage (profile data only, never a JWT).
   // Stringify OBJECT TO TEXT
   sessionStorage.setItem("user", JSON.stringify(data));
 };
@@ -14,27 +14,17 @@ export const getAuthUser = () => {
   if (sessionStorage.getItem("user")) {
     return JSON.parse(sessionStorage.getItem("user"));
   }
+  return null;
 };
 
 export const removeAuthUser = () => {
   if (sessionStorage.getItem("user")) sessionStorage.removeItem("user");
-};
-
-// --- Deprecated token helpers -------------------------------------------------
-// Kept as no-ops so existing imports do not break, but they deliberately
-// never write a JWT to browser storage. Auth is cookie-based now:
-// the backend sets an httpOnly `jwt` cookie, and axios calls use
-// withCredentials: true. Remove these (and their call sites) in a
-// follow-up once Login / Signup stop expecting a token in the response.
-/** @deprecated JWT is stored in an httpOnly cookie, not in storage. */
-export const setAuthToken = () => {};
-
-/** @deprecated JWT is stored in an httpOnly cookie, not in storage. */
-export const getAuthToken = () => undefined;
-
-/** @deprecated JWT is stored in an httpOnly cookie, not in storage. */
-export const removeAuthToken = () => {
-  // Remove any token a previous version of the app stored.
+  // Drop a jwtToken an older version of the app may have stored.
   if (sessionStorage.getItem("jwtToken"))
     sessionStorage.removeItem("jwtToken");
 };
+
+// Auth state is the stored user object (getAuthUser) plus the httpOnly
+// `jwt` cookie the backend sets on login / signup. There is deliberately
+// no token helper: a JWT must never live in browser storage, where any
+// script on the page could read it.

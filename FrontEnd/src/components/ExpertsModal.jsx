@@ -1,11 +1,12 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
+import { useEffect, useState } from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { getAuthToken } from "../helper/Storage";
-import toast from "react-hot-toast";
 
 const ExpertsModal = ({ appId, onClose }) => {
-  const auth = getAuthToken();
 
   const [application, setApplication] = useState({
     result: "",
@@ -14,34 +15,28 @@ const ExpertsModal = ({ appId, onClose }) => {
   });
 
   useEffect(() => {
-    axios
+    api
       .get(
-        `http://localhost:3000/api/v1/expertApply/${appId}`,
-
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
-        }
+        `/api/v1/expertApply/${appId}`
       )
       .then((resp) => {
-        setApplication({
-          ...application,
+        setApplication((a) => ({
+          ...a,
           result: resp.data.data,
           status: resp.data.status,
           loading: false,
-          reload: application.reload + 1,
-        });
+          reload: a.reload + 1,
+        }));
       })
-      .catch((err) => {
-        toast.error(err.response.data.message);
-        setApplication({
-          ...application,
+      .catch(() => {
+        // Error already toasted once by the api client interceptor.
+        setApplication((a) => ({
+          ...a,
           loading: false,
-          reload: application.reload + 1,
-        });
+          reload: a.reload + 1,
+        }));
       });
-  }, []);
+  }, [appId]);
 
   return (
     <div className="fixed inset-0 z-20 flex items-start justify-center p-10 overflow-y-auto bg-black bg-opacity-30 backdrop-blur-sm">

@@ -1,20 +1,12 @@
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
-const multer = require('multer');
+const { filterObj, upload } = require('../utils/filterObj');
+const {
+  applyEnvironmentalScore,
+} = require('../utils/environmentalScore');
 const sharp = require('sharp');
-const User = require('./../models/userModel');
 const Product = require('../models/productModel');
-
-const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) {
-      newObj[el] = obj[el];
-    }
-  });
-  return newObj;
-};
 
 // Fields a client must never be able to set through a generic update.
 // - password / passwordConfirm: only via /updateMyPassword or resetPassword
@@ -132,14 +124,7 @@ exports.updateMyProduct = (Model, modelType, filteredBody) =>
         )
       );
     }
-    updatedDoc.calculateEnvironmentalScore();
-    if (updatedDoc.environmentalScore >= 10) {
-      updatedDoc.harmfultoenv = false;
-      updatedDoc.environmentalImpactAssessed = true;
-    } else {
-      updatedDoc.harmfultoenv = true;
-      updatedDoc.environmentalImpactAssessed = true;
-    }
+    applyEnvironmentalScore(updatedDoc);
     await updatedDoc.save();
 
     res.status(200).json({
@@ -172,30 +157,16 @@ exports.deleteMyProduct = (Model, modelType) =>
     });
   });
 
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
-    cb(null, true);
-  } else {
-    cb(new AppError('Not an image!...Please upload an image', 400), false);
-  }
-};
-
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter,
-});
-
-exports.uploadImgs = upload.fields([
+const uploadImgs = upload.fields([
   { name: 'imageCover', maxCount: 1 },
   { name: 'images', maxCount: 3 },
 ]);
 
+exports.uploadImgs = uploadImgs;
+
 exports.resizeImgs = (modelName) =>
   catchAsync(async (req, res, next) => {
     if (!req.files) return next();
-    const date = new Date();
     //uploading image cover
     if (req.files.imageCover) {
       req.body.imageCover = `${req.user.name.split(' ', 1)[0]}-${
@@ -335,13 +306,17 @@ exports.updateMyReviewOrVote = (Model) =>
   catchAsync(async (req, res, next) => {
     // Only allow fields that belong on a review / vote. The old code passed
     // every supplied key through, including keys that do not exist on the
-    // model.
-    const allowedUpdate = filterObj(req.body, [
+    // model. NOTE: the fields must be separate arguments, not one array —
+    // filterObj(req.body, ['review', ...]) matches nothing (see
+    // utils/filterObj.js). That array form is what this handler used on
+    // the perf/p0-scalability branch, so updates were silently no-ops.
+    const allowedUpdate = filterObj(
+      req.body,
       'review',
       'rating',
       'comment',
-      'report',
-    ]);
+      'report'
+    );
 
     const doc = await Model.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
@@ -505,14 +480,7 @@ exports.createMyProduct = (Model, filteredBody) =>
 
     const doc = await Model.create(allowedFields);
 
-    doc.calculateEnvironmentalScore();
-    if (doc.environmentalScore >= 10) {
-      doc.harmfultoenv = false;
-      doc.environmentalImpactAssessed = true;
-    } else {
-      doc.harmfultoenv = true;
-      doc.environmentalImpactAssessed = true;
-    }
+    applyEnvironmentalScore(doc);
     await doc.save();
 
     res.status(201).json({
@@ -535,14 +503,7 @@ exports.createOne = (Model, modelType, allowedFields) =>
 
     const doc = await Model.create(createData);
     if (modelType === 'product') {
-      doc.calculateEnvironmentalScore();
-      if (doc.environmentalScore >= 10) {
-        doc.harmfultoenv = false;
-        doc.environmentalImpactAssessed = true;
-      } else {
-        doc.harmfultoenv = true;
-        doc.environmentalImpactAssessed = true;
-      }
+      applyEnvironmentalScore(doc);
       await doc.save();
     }
 

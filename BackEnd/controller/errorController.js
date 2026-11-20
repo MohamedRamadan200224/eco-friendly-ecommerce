@@ -6,18 +6,15 @@ const handleCastErrorDB = (err) => {
 };
 
 const handleDuplicateFieldsDB = (err) => {
-  // err.errmsg is not guaranteed to exist on newer driver errors; fall
-  // back to the keyValue map / message instead of crashing inside the
-  // error handler itself.
-  const keyValue = err.keyValue
+  // Mongoose 8 duplicate-key errors carry the offending fields in
+  // err.keyValue (e.g. { email: 'a@b.c' }). The old code read
+  // err.errmsg, which the current driver does not set, and regexed a
+  // "matched value" out of it.
+  const value = err.keyValue
     ? Object.entries(err.keyValue)
         .map(([key, val]) => `${key}: ${val}`)
         .join(', ')
-    : null;
-  const match = err.errmsg
-    ? err.errmsg.match(/(["'])(\\?.)*?\1/)
-    : null;
-  const value = keyValue || (match ? match[0] : 'duplicate value');
+    : 'duplicate value';
 
   const message = `Duplicate field value: ${value}. Please use another value!`;
   return new AppError(message, 400);

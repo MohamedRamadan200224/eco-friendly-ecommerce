@@ -1,14 +1,14 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+// Migrated to the shared api client (clean-code pass, 2026-11-19):
+// no raw axios, no hardcoded localhost URL, no Authorization header
+// (cookie auth — the httpOnly cookie is sent automatically), and
+// request errors are toasted once by the client's interceptor.
+import api from "../api/client";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const OnSaleModal = ({ onClose, productInfo }) => {
-  const navigate = useNavigate();
-  const auth = getAuthToken();
-  const user = getAuthUser();
 
   const initialProductInfo = {
     ...productInfo,
@@ -21,8 +21,12 @@ const OnSaleModal = ({ onClose, productInfo }) => {
     loading: true,
   });
   useEffect(() => {
-    if (auth && user.role === "company") {
-      setLocalProductInfo({ ...localProductInfo, owner: user.id });
+    // Read the logged-in user here (mount-time value): getAuthUser() returns
+    // a new object on every call, so it cannot be a dependency without
+    // re-running this effect on every render.
+    const currentUser = getAuthUser();
+    if (currentUser && currentUser.role === "company") {
+      setLocalProductInfo((l) => ({ ...l, owner: currentUser.id }));
     }
   }, []);
 
@@ -30,18 +34,13 @@ const OnSaleModal = ({ onClose, productInfo }) => {
     e.preventDefault();
     // try {
 
-    axios
+    api
       .patch(
-        `http://localhost:3000/api/v1/products/discount/${productInfo}`,
+        `/api/v1/products/discount/${productInfo}`,
         {
           onSale: true,
           price: localProductInfo.price,
           onsaleDuration: localProductInfo.onsaleDuration,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${auth.jwtToken}`,
-          },
         }
       )
       .then((resp) => {
@@ -57,10 +56,8 @@ const OnSaleModal = ({ onClose, productInfo }) => {
           });
         }
       })
-      .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
+      .catch(() => {
+        // Error already toasted once by the api client interceptor.
         setLocalProductInfo({ ...localProductInfo });
         setCondition({ ...condition, status: "error", loading: false });
       });

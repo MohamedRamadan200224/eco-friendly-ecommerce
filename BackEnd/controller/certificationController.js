@@ -1,10 +1,16 @@
-const Certification = require('./../models/certfifcationModel');
+// The Certification model file was renamed from the misspelled
+// certfifcationModel.js. Required for its side effect only (registering
+// the model with Mongoose); this controller does not itself create
+// Certification documents — certification is stored as User.isCertified.
+require('./../models/certificationModel');
 const User = require('./../models/userModel');
 const Product = require('./../models/productModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const Email = require('./../utils/email');
 const nodeHtmlToImage = require('node-html-to-image');
+const fs = require('fs');
+const path = require('path');
 
 const checkIfCanApply = async function (userId) {
   const count = await Product.countDocuments({
@@ -13,12 +19,22 @@ const checkIfCanApply = async function (userId) {
     soldNum: { $gte: 1 },
   });
 
-  if (count >= 1) {
-    return true;
-  } else {
-    return false;
-  }
+  return count >= 1;
 };
+
+// Render the certificate HTML from the template file, filling in the
+// placeholders. (Values are interpolated exactly as the old inline
+// template literal did — no escaping was added; see the note in the
+// report.)
+const buildCertificateHtml = (user) =>
+  fs
+    .readFileSync(
+      path.join(__dirname, '..', 'dev-data', 'templates', 'certificate.html'),
+      'utf8'
+    )
+    .replace(/{{userName}}/g, user.name)
+    .replace(/{{userEmail}}/g, user.email)
+    .replace(/{{date}}/g, new Date().toISOString().split('T')[0]);
 
 exports.applyCertification = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
@@ -36,59 +52,25 @@ exports.applyCertification = catchAsync(async (req, res, next) => {
   user.isCertified = true;
   await user.save({ validateBeforeSave: false });
 
-  res.status(200).json({
-    status: 'success',
-  });
+  // No response here, and no next() after a response. This handler is
+  // chained with sendCertification in certificationRoutes.js, which
+  // sends the 200 — the old code sent the response here and then called
+  // next(), so the certificate email only happened as a side effect
+  // after the response had already gone out.
   next();
 });
 
 exports.sendCertification = catchAsync(async (req, res, next) => {
-  let certificate = `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-            }
-            .certificate {
-                border: 15px solid #ccffcc;
-                border-right: 15px solid #ccffcc;
-                border-left: 15px solid #ccffcc;
-                width: 700px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            .certificate h1 {
-                font-size: 40px;
-                color: #ccffcc;
-                margin-top: 30px;
-            }
-            .certificate h2 {
-                font-family: 'Satisfy', cursive;
-                font-size: 24px;
-                letter-spacing: 1px;
-            }
-            .certificate h3 {
-                font-size: 18px;
-                margin-top: 10px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="certificate">
-            <h1>Certificate of Completion</h1>
-            <h2>This certificate is awarded to</h2>
-            <h1 class="colorGreen">${req.user.name}</h1>
-            <h3>For Being Non-Harmfull To Enviroment</h3>
-            <p>Email: ${req.user.email}</p>
-            <h3>Awarded on ${new Date().toISOString().split('T', 1)[0]}</h3>
-        </div>
-    </body>
-    </html>
-    `;
+  // Respond first, exactly as the old flow did (the client got its 200
+  // from applyCertification before the image / email work started).
+  // The certificate image is then generated and emailed in the
+  // background; a failure there is logged server-side only, since the
+  // client has already been told the certification succeeded.
+  res.status(200).json({
+    status: 'success',
+  });
+
+  const certificate = buildCertificateHtml(req.user);
 
   // Options for image generation
   const options = {
@@ -109,11 +91,9 @@ exports.sendCertification = catchAsync(async (req, res, next) => {
     ...options,
   })
     .then(async () => {
-      console.log('Image created successfully');
       await new Email(req.user, '').sendCertificate();
     })
     .catch((err) => {
-      console.error('Error creating image:', err);
-      return next(new AppError("Couldn't create Certification image!", 400));
+      console.error('Error creating certificate image:', err);
     });
 });

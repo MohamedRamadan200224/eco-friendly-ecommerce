@@ -1,28 +1,22 @@
-import React, { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { NAV_LINKS } from "../../constants";
 import { AiOutlineClose, AiOutlineMenu } from "react-icons/ai";
 import { RiShoppingCartLine } from "react-icons/ri";
 import { CgProfile } from "react-icons/cg";
 import CartModal from "./CartModal";
-import {
-  getAuthToken,
-  getAuthUser,
-  removeAuthToken,
-  removeAuthUser,
-} from "../helper/Storage";
+import { getAuthUser, removeAuthUser } from "../helper/Storage";
 
 const Navbar = () => {
   const [nav, setNav] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
 
   const user = getAuthUser();
-  const auth = getAuthToken();
+  const auth = !!user;
   const navigate = useNavigate();
 
   const Logout = (e) => {
     e.preventDefault();
-    removeAuthToken();
     removeAuthUser();
     navigate("/");
   };
