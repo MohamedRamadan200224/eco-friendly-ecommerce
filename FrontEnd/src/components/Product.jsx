@@ -14,7 +14,7 @@ import { useParams } from "react-router-dom";
 import { getAuthUser } from "../helper/Storage";
 import toast from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
-import api, { imageUrl } from "../api/client";
+import api, { imageUrl, handleImgError } from "../api/client";
 import ReviewSection from "./reviews/ReviewSection";
 import VoteSection from "./reviews/VoteSection";
 
@@ -130,6 +130,7 @@ const Product = () => {
                         <img
                           className="object-cover w-full h-full max-w-full"
                           alt=""
+                          onError={handleImgError(product.result.name)}
                           src={imageUrl(
                             product.result.category,
                             product.result.imageCover

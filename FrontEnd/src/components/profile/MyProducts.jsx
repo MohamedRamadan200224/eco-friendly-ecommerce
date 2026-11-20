@@ -13,7 +13,7 @@ import { MdEdit } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import { ClipLoader } from "react-spinners";
 import toast from "react-hot-toast";
-import api, { imageUrl } from "../../api/client";
+import api, { imageUrl, handleImgError } from "../../api/client";
 import { useApiList } from "../../hooks/useApiList";
 import Pagination from "../Pagination";
 
@@ -97,6 +97,7 @@ const MyProducts = ({ user }) => {
                       src={imageUrl(product.category, product.imageCover)}
                       className="rounded hover:border hover:border-green-400"
                       alt=""
+                      onError={handleImgError(product.name)}
                       width={30}
                       height={30}
                     />

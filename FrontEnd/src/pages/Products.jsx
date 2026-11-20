@@ -21,7 +21,7 @@ import Modal from "../components/Modal";
 import { getAuthUser } from "../helper/Storage";
 import { FaMedal } from "react-icons/fa";
 import { ClipLoader } from "react-spinners";
-import api, { imageUrl } from "../api/client";
+import api, { imageUrl, handleImgError } from "../api/client";
 import { useApiList } from "../hooks/useApiList";
 import Pagination from "../components/Pagination";
 
@@ -191,6 +191,7 @@ const Products = () => {
                   <img
                     src={imageUrl(duct.category, duct.imageCover)}
                     alt="featured products"
+                    onError={handleImgError(duct.name)}
                     className="h-48 w-full"
                   />
                   <h2 className="mt-[25px] text-[24px] font-bold text-cold-blue pl-2">

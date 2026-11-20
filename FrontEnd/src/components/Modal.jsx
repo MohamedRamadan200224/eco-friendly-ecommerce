@@ -21,7 +21,6 @@ const EditModal = ({ onClose }) => {
     price: 0,
     owner: "",
     harmfultoenv: false,
-    imageCover: null,
     loading: true,
     status: "",
     error: "",
@@ -38,7 +37,6 @@ const EditModal = ({ onClose }) => {
     formData.append("stockQuantity", product.stockQuantity);
     formData.append("price", product.price);
     formData.append("harmfultoenv", product.harmfultoenv);
-    formData.append("imageCover", product.imageCover);
 
     if (user && user.role === "company") {
       formData.append("owner", user.id);
@@ -175,15 +173,14 @@ const EditModal = ({ onClose }) => {
             }
           />
 
-          <label>Image Cover</label>
-          <input
-            id="example1"
-            type="file"
-            onChange={(e) =>
-              setProduct({ ...product, imageCover: e.target.files[0] })
-            }
-            className="mt-2 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-cold-blue file:py-2 file:px-4 file:text-sm file:font-semibold file:text-white hover:file:bg-black focus:outline-none disabled:pointer-events-none disabled:opacity-60"
-          />
+          {/* No image upload in the demo: uploads land on the serverless
+              function's ephemeral disk and never persist, so products show
+              a placeholder image instead. Info and details only. */}
+          <div className="rounded-md border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Image upload isn&apos;t available in the demo — this product
+            will show a placeholder image. Add the product info and details
+            below, no image needed.
+          </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <input

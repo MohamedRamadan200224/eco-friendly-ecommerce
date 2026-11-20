@@ -21,7 +21,6 @@ const UpdateProduct = () => {
     stockQuantity: "",
     price: "",
     harmfultoenv: false,
-    imageCover: null,
   });
 
   // `loading` itself is never rendered; only the setter is used to clear the
@@ -56,7 +55,6 @@ const UpdateProduct = () => {
     formData.append("stockQuantity", product.stockQuantity);
     formData.append("price", product.price);
     formData.append("harmfultoenv", product.harmfultoenv);
-    formData.append("imageCover", product.imageCover);
 
     const endpoint = `/api/v1/products/myProducts/${id}`;
 
@@ -78,13 +76,6 @@ const UpdateProduct = () => {
     setProduct((prevState) => ({
       ...prevState,
       [name]: value,
-    }));
-  };
-
-  const handleFileChange = (e) => {
-    setProduct((prevState) => ({
-      ...prevState,
-      imageCover: e.target.files[0],
     }));
   };
 
@@ -168,12 +159,15 @@ const UpdateProduct = () => {
             value={product.stockQuantity}
             onChange={handleInputChange}
           />
-          <label>Image Cover</label>
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="mt-2 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-cold-blue file:py-2 file:px-4 file:text-sm file:font-semibold file:text-white hover:file:bg-black focus:outline-none disabled:pointer-events-none disabled:opacity-60"
-          />
+          {/* No image upload in the demo: uploads land on the serverless
+              function's ephemeral disk and never persist, so the product
+              keeps its current cover (or a placeholder). Info and details
+              only. */}
+          <div className="rounded-md border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Image upload isn&apos;t available in the demo — the product
+            keeps its current image (or a placeholder). You can update the
+            product info and details below.
+          </div>
 
           {user && user.role === "admin" && (
             <div className="flex flex-col gap-2 sm:flex-row">
