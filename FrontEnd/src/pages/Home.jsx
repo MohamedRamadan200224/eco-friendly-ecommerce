@@ -125,6 +125,15 @@ const Home = () => {
               </div>
             ))}
         </div>
+        {products.loading === false && products.results.length === 0 && (
+          <div className="flex items-center justify-center">
+            <div className="p-6 m-10 max-w-sm mx-auto bg-cold-blue rounded-xl shadow-md flex items-center space-x-4">
+              <div className="text-xl text-center font-medium text-mint">
+                No Products Added Yet!
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <>
