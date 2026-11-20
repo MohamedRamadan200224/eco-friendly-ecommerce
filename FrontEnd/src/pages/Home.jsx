@@ -104,8 +104,9 @@ const Home = () => {
         <div className="grid gap-4 mt-10 cursor-pointer sm:grid-cols-2 md:grid-cols-4">
           {products.results.length > 0 &&
             products.results.map((product) => (
-              <div
+              <a
                 key={product.id}
+                href={`/products/${product.id}`}
                 className="flex flex-col border-2 rounded-md border-cold-blue"
               >
                 <img
@@ -122,7 +123,7 @@ const Home = () => {
                 <p className="mb-2 text-[18px] font-light leading-[1.67rem] text-cold-blue xl:w-[70%] pl-2">
                   ${product.price}
                 </p>
-              </div>
+              </a>
             ))}
         </div>
         {products.loading === false && products.results.length === 0 && (

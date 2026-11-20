@@ -1,12 +1,11 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 // Auth is cookie-based: the backend sets an httpOnly `jwt` cookie and
 // axios calls use withCredentials. No token is read from storage here.
 import PropTypes from "prop-types";
 // import { useStripe } from "@stripe/react-stripe-js";
-/* eslint-disable */
 import { loadStripe } from "@stripe/stripe-js";
 import { ClipLoader } from "react-spinners";
 
@@ -22,7 +21,7 @@ const stripePromise = stripePublishableKey
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const CartModal = ({ onClose }) => {
-  let respStatus1 = useRef("fail");
+  const respStatus1 = useRef("fail");
   const [totalPrice, setTotalPrice] = useState(0);
   // const stripe = useStripe();
 
@@ -34,145 +33,195 @@ const CartModal = ({ onClose }) => {
     reload: 0,
   });
 
-  useEffect(() => {
-    setCart({
-      ...cart,
-      loading: true,
-    });
+  // Fetch the cart. `silent` skips the loading spinner (background refetch
+  // after a delete); the initial load is visible. State is always updated
+  // with functional setState — the old code spread the stale `cart`
+  // closure, so a refetch after deleting the last item never cleared the
+  // just-deleted rows (ghost cart).
+  const fetchCart = useCallback((silent = false) => {
+    if (!silent) {
+      setCart((prev) => ({ ...prev, loading: true }));
+    }
 
-    axios.get(`${API_URL}/api/v1/addToCart/myCart`, {
-      withCredentials: true,
-    })
-      .then((resp) => {
-        let products = [];
-        respStatus1.current = resp.data.status;
-        products = resp.data.data;
-        if (products) {
-          const initialQuantities = products.reduce((acc, item) => {
-            acc[item.product.id] = item.quantity || 1;
-            return acc;
-          }, {});
-
-          setCart({
-            ...cart,
-            results: products,
-            quantities: initialQuantities,
-            status: resp.data.status,
-            loading: false,
-          });
-
-          setTotalPrice(resp.data.totalPrice);
-        }
-        // Set initial quantities to 1
+    axios
+      .get(`${API_URL}/api/v1/addToCart/myCart`, {
+        withCredentials: true,
       })
-      .catch((err) => {
-        setCart({
-          ...cart,
-          status: respStatus1.current,
+      .then((resp) => {
+        respStatus1.current = resp.data.status;
+        // Items whose product was deleted from the catalogue come back
+        // with product: null — drop them instead of crashing the render.
+        const products = (resp.data.data || []).filter(
+          (item) => item.product
+        );
+        const initialQuantities = products.reduce((acc, item) => {
+          acc[item.product.id] = item.quantity || 1;
+          return acc;
+        }, {});
+
+        setCart((prev) => ({
+          ...prev,
+          results: products,
+          quantities: initialQuantities,
+          status: resp.data.status,
           loading: false,
-        });
+        }));
+
+        setTotalPrice(resp.data.totalPrice || 0);
+      })
+      .catch(() => {
+        // Belt-and-braces: never keep stale items on screen after a
+        // failed load. The backend now answers 200 for an empty cart, so
+        // this only fires on genuine failures. A failed *background*
+        // refetch keeps the optimistic state instead (see below).
+        if (!silent) {
+          setCart((prev) => ({
+            ...prev,
+            results: [],
+            quantities: {},
+            status: respStatus1.current,
+            loading: false,
+          }));
+          setTotalPrice(0);
+        } else {
+          setCart((prev) => ({ ...prev, loading: false }));
+        }
       });
-  }, [cart.reload]);
+  }, []);
+
+  // Initial load is visible; refetches (reload bumped after a delete) are
+  // silent so the list never flashes a spinner.
+  useEffect(() => {
+    fetchCart(cart.reload > 0);
+  }, [fetchCart, cart.reload]);
 
   const removeItem = (e, id) => {
     e.preventDefault();
-    setCart({ ...cart, loading: true, reload: 0 });
-    axios.delete(`${API_URL}/api/v1/addToCart/myCart/${id}`, {
-      withCredentials: true,
-    })
-      .then((resp) => {
-        respStatus1.current = resp.data.status;
-        setCart({
-          ...cart,
-          status: resp.data.status,
-          loading: false,
-          reload: cart.reload + 1,
-        });
-      })
-      .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
-        setCart({
-          ...cart,
-          status: respStatus1.current,
-          loading: false,
-          reload: cart.reload + 1,
-        });
-      });
-  };
-
-  const deleteAll = (e, id) => {
-    e.preventDefault();
-    setCart({ ...cart, loading: true, reload: 0 });
-    axios.delete(`${API_URL}/api/v1/addToCart/myCart`, {
-      withCredentials: true,
-    })
-      .then((resp) => {
-        respStatus1.current = resp.data.status;
-        setCart({
-          ...cart,
-          status: resp.data.status,
-          loading: false,
-          reload: cart.reload + 1,
-        });
-      })
-      .catch((err) => {
-        toast.error(err.response.data.message, {
-          className: "w-auto",
-        });
-        setCart({
-          ...cart,
-          status: respStatus1.current,
-          loading: false,
-          reload: cart.reload + 1,
-        });
-      });
-  };
-
-  const updateQuantity = (id, quantity) => {
-    setCart((prevCart) => {
-      const newQuantities = {
-        ...prevCart.quantities,
-        [id]: quantity,
-      };
-      const newTotalPrice = prevCart.results.reduce((acc, item) => {
-        return acc + item.product.price * newQuantities[item.product.id];
-      }, 0);
-      setTotalPrice(newTotalPrice);
-
+    // Optimistic: take the item out immediately (and its share of the
+    // total) so the list never flashes a spinner. The reload bump on
+    // success triggers a silent background refetch to confirm the server
+    // state; on failure the pre-click state is restored and the same
+    // refetch confirms it.
+    const prevResults = cart.results;
+    const prevQuantities = cart.quantities;
+    const prevTotal = totalPrice;
+    const removed = prevResults.find((item) => item.product?.id === id);
+    const removedAmount =
+      (removed?.product.price || 0) * (prevQuantities[id] || 1);
+    setCart((prev) => {
+      const quantities = { ...prev.quantities };
+      delete quantities[id];
       return {
-        ...prevCart,
-        quantities: newQuantities,
+        ...prev,
+        results: prev.results.filter((item) => item.product?.id !== id),
+        quantities,
       };
     });
+    setTotalPrice((prevTotalPrice) =>
+      Math.max(0, prevTotalPrice - removedAmount)
+    );
+    axios
+      .delete(`${API_URL}/api/v1/addToCart/myCart/${id}`, {
+        withCredentials: true,
+      })
+      .then((resp) => {
+        respStatus1.current = resp.data.status;
+        // Bump only on success, via functional update, so rapid deletes
+        // can never lose a bump to a stale closure.
+        setCart((prev) => ({ ...prev, reload: prev.reload + 1 }));
+      })
+      .catch((err) => {
+        toast.error(
+          err.response?.data?.message || "Could not remove the item.",
+          {
+            className: "w-auto",
+          }
+        );
+        setCart((prev) => ({
+          ...prev,
+          results: prevResults,
+          quantities: prevQuantities,
+          reload: prev.reload + 1,
+        }));
+        setTotalPrice(prevTotal);
+      });
+  };
+
+  const deleteAll = (e) => {
+    e.preventDefault();
+    // Optimistic: empty the list immediately; same confirm/rollback
+    // pattern as removeItem.
+    const prevResults = cart.results;
+    const prevQuantities = cart.quantities;
+    const prevTotal = totalPrice;
+    setCart((prev) => ({ ...prev, results: [], quantities: {} }));
+    setTotalPrice(0);
+    axios
+      .delete(`${API_URL}/api/v1/addToCart/myCart`, {
+        withCredentials: true,
+      })
+      .then((resp) => {
+        respStatus1.current = resp.data.status;
+        setCart((prev) => ({ ...prev, reload: prev.reload + 1 }));
+      })
+      .catch((err) => {
+        toast.error(
+          err.response?.data?.message || "Could not clear the cart.",
+          {
+            className: "w-auto",
+          }
+        );
+        setCart((prev) => ({
+          ...prev,
+          results: prevResults,
+          quantities: prevQuantities,
+          reload: prev.reload + 1,
+        }));
+        setTotalPrice(prevTotal);
+      });
   };
 
   const handleQuantityChange = (id, delta) => {
-    setCart((prevCart) => {
-      const newQuantity = prevCart.quantities[id] + delta;
-      if (newQuantity < 1) return prevCart; // Prevent negative quantities
+    const current = cart.quantities[id] || 1;
+    const newQuantity = current + delta;
+    if (newQuantity < 1) return; // Prevent negative quantities
+    const item = cart.results.find((entry) => entry.product?.id === id);
+    const price = item?.product.price || 0;
 
-      axios.patch(
+    // Optimistic: show the new quantity and total immediately, then
+    // confirm with the server. The PATCH runs outside any state updater
+    // — the old code fired it inside setCart, where StrictMode in dev
+    // double-invokes the updater and the PATCH could fire twice, and
+    // rapid clicks computed from the still-old quantity.
+    setCart((prev) => ({
+      ...prev,
+      quantities: { ...prev.quantities, [id]: newQuantity },
+    }));
+    setTotalPrice((prevTotalPrice) =>
+      Math.max(0, prevTotalPrice + price * delta)
+    );
+
+    axios
+      .patch(
         `${API_URL}/api/v1/addToCart/myCart/${id}`,
         { quantity: newQuantity },
         { withCredentials: true }
       )
-        .then(() => {
-          updateQuantity(id, newQuantity);
-        })
-        .catch((err) => {
-          if (delta === 1) {
-            toast.error(err.response.data.message);
-          }
-        });
-      return {
-        ...prevCart,
-        quantities: {
-          ...prevCart.quantities,
-        },
-      };
-    });
+      .catch((err) => {
+        // Revert to the previous quantity on failure.
+        setCart((prev) => ({
+          ...prev,
+          quantities: { ...prev.quantities, [id]: current },
+        }));
+        setTotalPrice((prevTotalPrice) =>
+          Math.max(0, prevTotalPrice - price * delta)
+        );
+        if (delta === 1) {
+          toast.error(
+            err.response?.data?.message || "Could not update quantity."
+          );
+        }
+      });
   };
 
   const handleCheckout = async () => {
@@ -191,14 +240,14 @@ const CartModal = ({ onClose }) => {
           sessionId,
         });
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error("Failed to initiate checkout. Please try again.");
       });
   };
 
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center p-4 bg-black bg-opacity-30 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-white rounded-md">
+    <div className="fixed inset-0 z-20 flex items-center justify-center p-4 overflow-y-auto bg-black bg-opacity-30 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-md">
         <div className="flex flex-col w-full gap-5 p-5 text-cold-blue">
           <button onClick={onClose} className="self-end">
             <IoMdCloseCircleOutline size={30} color="#263238" />
@@ -232,7 +281,9 @@ const CartModal = ({ onClose }) => {
                         <ul className="-my-8">
                           {cart.loading === false &&
                             cart.results.length > 0 &&
-                            cart.results.map((item) => {
+                            cart.results
+                              .filter((item) => item.product)
+                              .map((item) => {
                               return (
                                 <li
                                   key={item.product.id}
