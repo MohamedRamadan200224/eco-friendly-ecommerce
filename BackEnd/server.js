@@ -27,7 +27,20 @@ const DB = process.env.DATABASE;
 
 const port = process.env.PORT || 3000;
 
-mongoose.connect(DB).then(() => console.log('DB connection successful!'));
+// Perf P0: bound the connection pool and fail fast when MongoDB is
+// unreachable, instead of hanging a request indefinitely. The old call
+// was mongoose.connect(DB) with no options at all.
+mongoose
+  .connect(DB, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    maxPoolSize: 10,
+  })
+  .then(() => console.log('DB connection successful!'))
+  .catch((err) => {
+    console.error('DB connection failed:', err.message);
+    process.exit(1);
+  });
 
 const server = app.listen(port, () => {
   console.log(`App listening on ${port}`);

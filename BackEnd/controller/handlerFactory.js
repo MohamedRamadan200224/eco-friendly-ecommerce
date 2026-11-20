@@ -74,13 +74,31 @@ exports.getMyProducts = (Model, modelType) =>
     // SECURITY: always use the authenticated user's id. The old code took
     // the owner id from req.params.id, so any caller could list another
     // user's products by guessing their id.
-    const docs = await Model.find({
-      owner: req.user.id,
-    });
+    //
+    // Perf P0: this used to be an unbounded Model.find({ owner }) — every
+    // product a seller ever created, in one response. Paginated with the
+    // same cap/default as APIFeatures.paginate() (max 50, default 20),
+    // plus a total count like handlerFactory.getAll returns. Sorted by
+    // newest first so page boundaries are deterministic (an unsorted
+    // skip/limit can return the same document on two pages).
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 20, 1),
+      50
+    );
+    const skip = (page - 1) * limit;
+    const filter = { owner: req.user.id };
+
+    const total = await Model.countDocuments(filter);
+    const docs = await Model.find(filter)
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       status: 'success',
       results: docs.length,
+      total,
       data: {
         data: docs,
       },
