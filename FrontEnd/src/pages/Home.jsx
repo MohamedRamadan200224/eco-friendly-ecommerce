@@ -21,7 +21,7 @@ import { Navigation, Pagination, FreeMode, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import api, { imageUrl } from "../api/client";
+import api, { imageUrl, handleImgError } from "../api/client";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -111,6 +111,7 @@ const Home = () => {
                 <img
                   src={imageUrl(product.category, product.imageCover)}
                   alt={product.name}
+                  onError={handleImgError(product.name)}
                   className="object-cover w-full h-48"
                 />
                 <h2 className="mt-[25px] text-[24px] font-bold text-cold-blue pl-2">

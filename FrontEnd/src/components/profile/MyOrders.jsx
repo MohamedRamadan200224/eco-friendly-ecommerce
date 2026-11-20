@@ -9,7 +9,7 @@
 // error toast). Image URLs are built with the client's imageUrl helper,
 // not a hardcoded localhost string.
 import { ClipLoader } from "react-spinners";
-import api, { imageUrl } from "../../api/client";
+import api, { imageUrl, handleImgError } from "../../api/client";
 import { useApiList } from "../../hooks/useApiList";
 import Pagination from "../Pagination";
 
@@ -52,6 +52,7 @@ const MyOrders = () => {
                       )}
                       className="rounded hover:border hover:border-green-400"
                       alt=""
+                      onError={handleImgError(product.product.name)}
                       width={30}
                       height={30}
                     />

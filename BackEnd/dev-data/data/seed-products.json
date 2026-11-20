@@ -4,7 +4,7 @@
     "environmentalImpactAssessed": true,
     "environmentalScore": 9.2,
     "harmfultoenv": false,
-    "imageCover": "/ElectricCar.png",
+    "imageCover": "https://placehold.co/600x400/green/white?text=Electric+Car+1",
     "images": [
       "https://placehold.co/600x400/green/white?text=Electric+Car+1",
       "https://placehold.co/600x400/green/white?text=Electric+Car+2"
@@ -27,7 +27,7 @@
     "environmentalImpactAssessed": true,
     "environmentalScore": 8.5,
     "harmfultoenv": false,
-    "imageCover": "/Tshirt.jpg",
+    "imageCover": "https://placehold.co/600x400/blue/white?text=Organic+Shirt+1",
     "images": [
       "https://placehold.co/600x400/blue/white?text=Organic+Shirt+1",
       "https://placehold.co/600x400/blue/white?text=Organic+Shirt+2"
@@ -49,7 +49,7 @@
     "environmentalImpactAssessed": true,
     "environmentalScore": 7.8,
     "harmfultoenv": false,
-    "imageCover": "/SmartRefrigrator.jpg",
+    "imageCover": "https://placehold.co/600x400/gray/white?text=Smart+Fridge+1",
     "images": [
       "https://placehold.co/600x400/gray/white?text=Smart+Fridge+1",
       "https://placehold.co/600x400/gray/white?text=Smart+Fridge+2"
@@ -72,7 +72,7 @@
     "environmentalImpactAssessed": true,
     "environmentalScore": 9.5,
     "harmfultoenv": false,
-    "imageCover": "/Quinoa.webp",
+    "imageCover": "https://placehold.co/600x400/brown/white?text=Quinoa+1",
     "images": [
       "https://placehold.co/600x400/brown/white?text=Quinoa+1",
       "https://placehold.co/600x400/brown/white?text=Quinoa+2"
@@ -94,7 +94,7 @@
     "environmentalImpactAssessed": true,
     "environmentalScore": 8.7,
     "harmfultoenv": false,
-    "imageCover": "/RecycledSunglasses.jpg",
+    "imageCover": "https://placehold.co/600x400/orange/white?text=Sunglasses+1",
     "images": [
       "https://placehold.co/600x400/orange/white?text=Sunglasses+1",
       "https://placehold.co/600x400/orange/white?text=Sunglasses+2"

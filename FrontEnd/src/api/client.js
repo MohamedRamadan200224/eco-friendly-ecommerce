@@ -42,10 +42,47 @@ api.interceptors.response.use(
   }
 );
 
+// Demo placeholder image for products without a usable cover.
+// Image upload is not available in the demo (uploads land on the
+// serverless function's ephemeral disk and never persist), so products
+// created in the demo have no cover, and the seeded covers point at files
+// that were never committed. Show a placeholder instead of a broken image.
+export const placeholderImage = (label) =>
+  `https://placehold.co/600x400/15803d/ffffff?text=${encodeURIComponent(
+    label || "No image"
+  )}`;
+
 // Image URLs served by the backend's static /img route. Build them from the
 // API base instead of hardcoding a localhost string at each call site.
-export const imageUrl = (category, imageCover) =>
-  `${apiBaseUrl}/img/${category}/${imageCover}`;
+// A cover that is already a full URL (e.g. a placeholder from the seed
+// data) is used as-is; a missing cover falls back to the placeholder.
+// A leading slash on the filename is stripped so the URL has no "//".
+export const imageUrl = (category, imageCover) => {
+  if (!imageCover) return placeholderImage(category || "Product");
+  if (/^https?:\/\//.test(imageCover)) return imageCover;
+  return `${apiBaseUrl}/img/${category}/${String(imageCover).replace(
+    /^\//,
+    ""
+  )}`;
+};
+
+// <img onError> fallback: if the backend file is missing (the seeded covers
+// point at files that were never committed), swap to the placeholder.
+// The guard stops an infinite loop if the placeholder itself fails.
+export const handleImgError = (label) => (e) => {
+  const el = e.currentTarget;
+  const fallback = placeholderImage(label);
+  if (el.src !== fallback) el.src = fallback;
+};
+
+// Demo detection: the public demo runs on a *.vercel.app domain. Image
+// upload is disabled there (uploads land on the serverless function's
+// ephemeral disk and never persist); anywhere else (localhost, a real
+// domain) upload works normally. The upload code stays in place so the
+// feature exists for review — only its availability is gated.
+export const isDemoSite = () =>
+  typeof window !== "undefined" &&
+  window.location.hostname.includes("vercel.app");
 
 export const userImageUrl = (photo) => `${apiBaseUrl}/img/users/${photo}`;
 

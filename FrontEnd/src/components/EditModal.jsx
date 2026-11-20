@@ -2,7 +2,8 @@
 // no raw axios, no hardcoded localhost URL, no Authorization header
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
-import api from "../api/client";
+import api, { isDemoSite } from "../api/client";
+import { compressImage } from "../helper/compressImage";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
@@ -36,7 +37,7 @@ const EditModal = ({ onClose, productInfo }) => {
     loading: true,
   });
 
-  const editProduct = (e) => {
+  const editProduct = async (e) => {
     e.preventDefault();
     // try {
     const formData = new FormData();
@@ -46,7 +47,15 @@ const EditModal = ({ onClose, productInfo }) => {
     formData.append("stockQuantity", localProductInfo.stockQuantity);
     formData.append("price", localProductInfo.price);
     formData.append("harmfultoenv", localProductInfo.harmfultoenv);
-    formData.append("imageCover", localProductInfo.imageCover);
+
+    // Only send a cover when the seller picked a new file (compressed
+    // client-side first); otherwise the existing cover stays untouched.
+    if (localProductInfo.imageCover instanceof File) {
+      formData.append(
+        "imageCover",
+        await compressImage(localProductInfo.imageCover)
+      );
+    }
 
     if (user && user.role === "company") {
       formData.append("owner", user.id);
@@ -200,6 +209,8 @@ const EditModal = ({ onClose, productInfo }) => {
           <input
             id="example1"
             type="file"
+            accept="image/*"
+            disabled={isDemoSite()}
             onChange={(e) =>
               setLocalProductInfo({
                 ...localProductInfo,
@@ -208,6 +219,13 @@ const EditModal = ({ onClose, productInfo }) => {
             }
             className="mt-2 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-cold-blue file:py-2 file:px-4 file:text-sm file:font-semibold file:text-white hover:file:bg-black focus:outline-none disabled:pointer-events-none disabled:opacity-60"
           />
+          {isDemoSite() && (
+            <div className="rounded-md border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Image upload isn&apos;t available in the demo — the product
+              keeps its current image (or a placeholder). You can update
+              the product info and details below.
+            </div>
+          )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
