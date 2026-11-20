@@ -307,4 +307,10 @@ async function main() {
   }
 }
 
-main();
+// Only run as a script (`node dev-data/seed.js --import`); when required
+// (e.g. by the one-time /seed endpoint) just export the functions.
+if (require.main === module) {
+  main();
+}
+
+module.exports = { importSeedData, deleteSeedData, connectDB };
