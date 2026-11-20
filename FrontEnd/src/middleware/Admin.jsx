@@ -1,10 +1,9 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { getAuthUser, getAuthToken } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const Admin = () => {
-  const auth = getAuthToken();
   const user = getAuthUser();
-  return auth && user.role === "admin" ? <Outlet /> : <Navigate to="/" />;
+  return user && user.role === "admin" ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default Admin;

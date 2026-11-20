@@ -1,9 +1,9 @@
 import { Outlet, Navigate } from "react-router-dom";
-import { getAuthToken } from "../helper/Storage";
+import { getAuthUser } from "../helper/Storage";
 
 const Guest = () => {
-  const auth = getAuthToken();
-  return auth ? <Outlet /> : <Navigate to="/" />;
+  const user = getAuthUser();
+  return user ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default Guest;

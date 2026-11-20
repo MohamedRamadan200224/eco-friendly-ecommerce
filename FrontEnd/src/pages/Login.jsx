@@ -3,14 +3,13 @@
 // Requests go through the shared api client (cookie auth, one shared
 // error toast) instead of raw axios + hardcoded localhost URLs. The
 // react-toastify CSS import is removed — react-hot-toast is the only
-// toast library now. The setAuthToken() call is kept as-is: it is the
-// deprecated no-op from the cookie-auth PR #1 (the JWT lives in an
-// httpOnly cookie; removing the call is that PR's follow-up, not this
-// pass).
+// toast library now. Auth is cookie-based: the backend sets an httpOnly
+// jwt cookie on login and the user object is stored via setAuthUser;
+// no token is ever written to browser storage.
 import { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import { setAuthToken, setAuthUser } from "../helper/Storage";
+import { setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
 import api from "../api/client";
 const Login = () => {
@@ -49,9 +48,6 @@ const Login = () => {
             loading: false,
             error: "",
           });
-          let tokenInfo = {};
-          tokenInfo["jwtToken"] = resp.data.token;
-          setAuthToken(tokenInfo);
           setAuthUser(resp.data.data.user);
           navigate("/");
         }

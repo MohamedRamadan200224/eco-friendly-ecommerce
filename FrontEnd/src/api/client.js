@@ -11,7 +11,6 @@
 // See FrontEnd/.env.example.
 import axios from "axios";
 import toast from "react-hot-toast";
-import { getAuthToken } from "../helper/Storage";
 
 export const apiBaseUrl =
   import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -21,19 +20,6 @@ const api = axios.create({
   // Auth is cookie-based (security PR #1): the backend sets an httpOnly
   // `jwt` cookie on login / signup and the browser sends it automatically.
   withCredentials: true,
-});
-
-// Attach a bearer token only when one is actually available. Today
-// getAuthToken() returns undefined (cookie auth), so this is a no-op and
-// the cookie does the work — the header is never sent as "Bearer undefined".
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  const value =
-    typeof token === "string" ? token : token && token.jwtToken;
-  if (value) {
-    config.headers.Authorization = `Bearer ${value}`;
-  }
-  return config;
 });
 
 // ONE shared error handler: every failed request toasts the server's message

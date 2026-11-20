@@ -7,11 +7,11 @@
 // gone (the error is toasted once by the api client interceptor). The
 // setAuthToken() call is kept as-is: it is the deprecated no-op from
 // the cookie-auth PR #1 (the JWT lives in an httpOnly cookie; removing
-// the call is that PR's follow-up, not this pass).
+// no token is ever written to browser storage.
 import { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
-import { setAuthToken, setAuthUser } from "../helper/Storage";
+import { setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
 import api from "../api/client";
 
@@ -56,9 +56,6 @@ const Signup = () => {
             loading: false,
             error: "",
           });
-          let tokenInfo = {};
-          tokenInfo["jwtToken"] = resp.data.token;
-          setAuthToken(tokenInfo);
           setAuthUser(resp.data.data.user);
           navigate("/");
         } else if (resp.data.status === "fail") {

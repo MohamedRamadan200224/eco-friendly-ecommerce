@@ -5,7 +5,7 @@
 import api from "../api/client";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { setAuthToken, setAuthUser } from "../helper/Storage";
+import { setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
 const ResetPassword = () => {
@@ -37,9 +37,6 @@ const ResetPassword = () => {
             loading: false,
             error: "",
           });
-          let tokenInfo = {};
-          tokenInfo["jwtToken"] = resp.data.token;
-          setAuthToken(tokenInfo);
           setAuthUser(resp.data.data.user);
           navigate("/");
         }
