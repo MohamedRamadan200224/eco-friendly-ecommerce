@@ -75,6 +75,15 @@ export const handleImgError = (label) => (e) => {
   if (el.src !== fallback) el.src = fallback;
 };
 
+// Demo detection: the public demo runs on a *.vercel.app domain. Image
+// upload is disabled there (uploads land on the serverless function's
+// ephemeral disk and never persist); anywhere else (localhost, a real
+// domain) upload works normally. The upload code stays in place so the
+// feature exists for review — only its availability is gated.
+export const isDemoSite = () =>
+  typeof window !== "undefined" &&
+  window.location.hostname.includes("vercel.app");
+
 export const userImageUrl = (photo) => `${apiBaseUrl}/img/users/${photo}`;
 
 export default api;
