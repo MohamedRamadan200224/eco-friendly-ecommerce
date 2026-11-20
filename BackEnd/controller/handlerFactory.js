@@ -52,11 +52,32 @@ const stripFields = (obj, forbiddenFields) => {
 // getOne / getAll). The in-memory copy sent to the client shows the
 // restored price; expiring the sale in the DB belongs to a write path /
 // scheduled job.
+//
+// `onsaleDuration` is a timestamp (ms) when written by activateDiscount,
+// but rows seeded before this fix stored a DAY-COUNT (30 / 15 / 10). A
+// day-count is tiny next to a ms timestamp, so comparing
+// Date.now() > onsaleDuration expired every seeded sale on first read:
+// every on-sale product came back at full price with onSale false, which
+// also broke the Offers filter and Home's featured section (they fetch
+// ?onSale=true, then the response flipped onSale to false). Small values
+// are therefore read as days counted from the product's creation.
+const SALE_DURATION_DAY_COUNT_MAX = 100000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 const applyExpiredSaleInMemory = (doc) => {
-  if (doc && doc.onSale === true && Date.now() > doc.onsaleDuration) {
-    doc.price = doc.originalPrice;
-    doc.onSale = false;
-    doc.onsaleDuration = null;
+  if (doc && doc.onSale === true && doc.onsaleDuration != null) {
+    let expiresAt = doc.onsaleDuration;
+    if (doc.onsaleDuration < SALE_DURATION_DAY_COUNT_MAX) {
+      const start = doc.createdAt
+        ? new Date(doc.createdAt).getTime()
+        : Date.now();
+      expiresAt = start + doc.onsaleDuration * DAY_MS;
+    }
+    if (Date.now() > expiresAt) {
+      doc.price = doc.originalPrice;
+      doc.onSale = false;
+      doc.onsaleDuration = null;
+    }
   }
   return doc;
 };
@@ -151,7 +172,10 @@ exports.deleteMyProduct = (Model, modelType) =>
       );
     }
 
-    res.status(204).json({
+    // 200, not 204: a 204 response carries no body, so MyProducts'
+    // removeItem (which checks resp.data.status === "success" before
+    // toasting) could never see the success.
+    res.status(200).json({
       status: 'success',
       data: null,
     });
@@ -180,10 +204,14 @@ exports.resizeImgs = (modelName) =>
         .toFile(`public/img/${req.body.category}/${req.body.imageCover}`);
     }
 
-    //uploadimg images
-    req.body.images = [];
-
+    // Gallery images: only touch req.body.images when new gallery files
+    // were actually uploaded. The old code set req.body.images = []
+    // unconditionally whenever req.files was an object — which multer's
+    // .fields() always provides for FormData requests — so every product
+    // edit (e.g. from the Update Product page, which never sends images)
+    // wiped the product's gallery.
     if (req.files.images) {
+      req.body.images = [];
       await Promise.all(
         req.files.images.map(async (file, i) => {
           const filename = `${req.user.name}-${modelName}-${
@@ -294,7 +322,10 @@ exports.deleteMyReviewOrVote = (Model) =>
         new AppError("Couldn't delete this review or vote in DB!", 400)
       );
     }
-    res.status(204).json({
+    // 200, not 204: a 204 response carries no body, so the clients that
+    // check resp.data.status (ReviewSection / VoteSection delete handlers)
+    // could never see the success — same pattern as deleteMyProduct below.
+    res.status(200).json({
       status: 'success',
       data: {
         data: null,
@@ -352,7 +383,10 @@ exports.deleteOne = (Model) =>
       return next(new AppError('No document found with that ID', 404));
     }
 
-    res.status(204).json({
+    // 200, not 204: a 204 response carries no body, so the admin Users
+    // page (which reads resp.data.status after deleting a user) could
+    // never see the success.
+    res.status(200).json({
       status: 'success',
       data: null,
     });

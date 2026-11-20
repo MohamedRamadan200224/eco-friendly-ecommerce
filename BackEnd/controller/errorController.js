@@ -33,6 +33,17 @@ const handleJWTError = () =>
 const handleJWTExpiredError = () =>
   new AppError('Your token has expired! Please log in again.', 401);
 
+// Multer (file upload) errors: without this, an oversize file fell
+// through as a generic 500. LIMIT_FILE_SIZE is the only multer error
+// this app can hit (the shared instance caps files at 5 MB); anything
+// else is reported as a plain 400.
+const handleMulterError = (err) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return new AppError('File is too large. Maximum size is 5 MB.', 400);
+  }
+  return new AppError('File upload failed. Please try again.', 400);
+};
+
 const sendErrorDev = (err, req, res) => {
   // A) API
   if (req.originalUrl.startsWith('/api')) {
@@ -96,6 +107,10 @@ module.exports = (err, req, res, next) => {
 
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
+
+  // Convert multer errors before the dev/prod branches: both branches
+  // then report the converted (operational) error.
+  if (err.name === 'MulterError') err = handleMulterError(err);
 
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, req, res);

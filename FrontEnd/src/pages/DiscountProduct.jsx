@@ -44,7 +44,24 @@ const DiscountProduct = () => {
 
   const discountProduct = (e) => {
     e.preventDefault();
-    // try {
+    // Validate client-side: the backend requires price to be a *number*
+    // (typeof check), so sending the input's raw string 400s every time,
+    // and leaving the field untouched sent 0, which 400s too.
+    const currentPrice = productInfo.result
+      ? productInfo.result.price
+      : undefined;
+    if (!productInfo.price || productInfo.price <= 0) {
+      toast.error("Enter a discount price greater than 0.");
+      return;
+    }
+    if (currentPrice !== undefined && productInfo.price >= currentPrice) {
+      toast.error("The discount price must be lower than the current price.");
+      return;
+    }
+    if (!productInfo.onsaleDuration || productInfo.onsaleDuration <= 0) {
+      toast.error("Enter a discount duration in days.");
+      return;
+    }
 
     api
       .patch(
@@ -83,7 +100,10 @@ const DiscountProduct = () => {
               onChange={(e) =>
                 setProductInfo({
                   ...productInfo,
-                  price: e.target.value,
+                  // Number(): the backend rejects a string price
+                  // (typeof !== 'number' → 400), and e.target.value is
+                  // always a string.
+                  price: Number(e.target.value),
                 })
               }
             />
@@ -96,7 +116,7 @@ const DiscountProduct = () => {
               onChange={(e) =>
                 setProductInfo({
                   ...productInfo,
-                  onsaleDuration: e.target.value,
+                  onsaleDuration: Number(e.target.value),
                 })
               }
             />

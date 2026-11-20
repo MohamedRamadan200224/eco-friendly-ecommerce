@@ -5,6 +5,7 @@ import { AiOutlineClose, AiOutlineMenu } from "react-icons/ai";
 import { RiShoppingCartLine } from "react-icons/ri";
 import { CgProfile } from "react-icons/cg";
 import CartModal from "./CartModal";
+import api from "../api/client";
 import { getAuthUser, removeAuthUser } from "../helper/Storage";
 
 const Navbar = () => {
@@ -15,8 +16,18 @@ const Navbar = () => {
   const auth = !!user;
   const navigate = useNavigate();
 
-  const Logout = (e) => {
+  const Logout = async (e) => {
     e.preventDefault();
+    // Tell the server to clear the httpOnly `jwt` cookie first. The old
+    // code only cleared sessionStorage, so the 90-day cookie stayed valid
+    // and credentialed API calls stayed authenticated after "logout".
+    // Logout still proceeds locally if the call itself fails (the cookie
+    // may already be gone).
+    try {
+      await api.post("/api/v1/users/logout");
+    } catch {
+      // Already logged out server-side; still clear local state below.
+    }
     removeAuthUser();
     navigate("/");
   };

@@ -14,7 +14,7 @@ import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
 import { Link } from "react-router-dom";
-import { ClipLoader } from "react-spinners";
+import EcoLoader from "../components/EcoLoader";
 import { GoPlus } from "react-icons/go";
 import api, { userImageUrl } from "../api/client";
 import { useApiList } from "../hooks/useApiList";
@@ -118,11 +118,7 @@ const Users = () => {
               </thead>
               <tbody className="text-gray-500">
                 {users.loading === true && (
-                  <ClipLoader
-                    className="color-cold-blue my-2 align-center"
-                    loading={true}
-                    size={70}
-                  />
+                  <EcoLoader label="Loading users…" />
                 )}
                 {users.loading === false &&
                   users.results.length > 0 &&

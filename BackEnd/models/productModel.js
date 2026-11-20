@@ -123,8 +123,12 @@ const productSchema = new mongoose.Schema(
   }
 );
 productSchema.virtual('discount').get(function () {
-  if (this.onSale === true) {
-    return (this.price * 100) / this.originalPrice;
+  // Percent OFF: (1 - price / originalPrice) * 100. The old formula
+  // (price * 100 / originalPrice) returned the price *as a percentage of*
+  // the original (a $32,000 car on a $35,000 original showed "91% OFF"
+  // instead of 9%).
+  if (this.onSale === true && this.originalPrice > 0) {
+    return (1 - this.price / this.originalPrice) * 100;
   }
   // Not on sale: the old code fell off the end and returned undefined.
   return 0;
