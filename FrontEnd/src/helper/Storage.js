@@ -1,3 +1,9 @@
+// Non-sensitive user profile data only. The JWT itself is NEVER stored
+// here (or in localStorage): it lives in an httpOnly cookie set by the
+// backend on login / signup, and the browser sends it automatically with
+// credentialed requests (axios: withCredentials: true). Anything stored
+// in sessionStorage / localStorage is readable by any script running on
+// the page, so storing a JWT there makes it stealable via XSS.
 export const setAuthUser = (data) => {
   // save object to the local storage
   // Stringify OBJECT TO TEXT
@@ -14,18 +20,21 @@ export const removeAuthUser = () => {
   if (sessionStorage.getItem("user")) sessionStorage.removeItem("user");
 };
 
-export const setAuthToken = (data) => {
-  // save object to the local storage
-  // Stringify OBJECT TO TEXT
-  sessionStorage.setItem("jwtToken", JSON.stringify(data));
-};
+// --- Deprecated token helpers -------------------------------------------------
+// Kept as no-ops so existing imports do not break, but they deliberately
+// never write a JWT to browser storage. Auth is cookie-based now:
+// the backend sets an httpOnly `jwt` cookie, and axios calls use
+// withCredentials: true. Remove these (and their call sites) in a
+// follow-up once Login / Signup stop expecting a token in the response.
+/** @deprecated JWT is stored in an httpOnly cookie, not in storage. */
+export const setAuthToken = () => {};
 
-export const getAuthToken = () => {
-  if (sessionStorage.getItem("jwtToken")) {
-    return JSON.parse(sessionStorage.getItem("jwtToken"));
-  }
-};
+/** @deprecated JWT is stored in an httpOnly cookie, not in storage. */
+export const getAuthToken = () => undefined;
 
+/** @deprecated JWT is stored in an httpOnly cookie, not in storage. */
 export const removeAuthToken = () => {
-  if (sessionStorage.getItem("jwtToken")) sessionStorage.removeItem("jwtToken");
+  // Remove any token a previous version of the app stored.
+  if (sessionStorage.getItem("jwtToken"))
+    sessionStorage.removeItem("jwtToken");
 };

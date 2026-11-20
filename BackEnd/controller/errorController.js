@@ -6,8 +6,18 @@ const handleCastErrorDB = (err) => {
 };
 
 const handleDuplicateFieldsDB = (err) => {
-  const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  console.log(value);
+  // err.errmsg is not guaranteed to exist on newer driver errors; fall
+  // back to the keyValue map / message instead of crashing inside the
+  // error handler itself.
+  const keyValue = err.keyValue
+    ? Object.entries(err.keyValue)
+        .map(([key, val]) => `${key}: ${val}`)
+        .join(', ')
+    : null;
+  const match = err.errmsg
+    ? err.errmsg.match(/(["'])(\\?.)*?\1/)
+    : null;
+  const value = keyValue || (match ? match[0] : 'duplicate value');
 
   const message = `Duplicate field value: ${value}. Please use another value!`;
   return new AppError(message, 400);
@@ -37,12 +47,14 @@ const sendErrorDev = (err, req, res) => {
     });
   }
 
-  // B) RENDERED WEBSITE
-  // console.error('ERROR 💥', err);
-  // return res.status(err.statusCode).render('error', {
-  //   title: 'Something went wrong!',
-  //   msg: err.message,
-  // });
+  // B) Non-API request (there is no rendered website in this app):
+  // return JSON instead of crashing on res.render('error'), which has no
+  // view engine configured.
+  return res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+    stack: err.stack,
+  });
 };
 
 const sendErrorProd = (err, req, res) => {
@@ -65,22 +77,20 @@ const sendErrorProd = (err, req, res) => {
     });
   }
 
-  // B) RENDERED WEBSITE
-  // A) Operational, trusted error: send message to client
+  // B) Non-API request: this app has no rendered website / view engine,
+  // so always answer with JSON. The old code called res.render('error'),
+  // which throws because no view engine is configured — turning a 500
+  // into a second, unhandled error.
   if (err.isOperational) {
-    console.log(err);
-    return res.status(err.statusCode).render('error', {
-      title: 'Something went wrong!',
-      msg: err.message,
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
     });
   }
-  // B) Programming or other unknown error: don't leak error details
-  // 1) Log error
   console.error('ERROR 💥', err);
-  // 2) Send generic message
-  return res.status(err.statusCode).render('error', {
-    title: 'Something went wrong!',
-    msg: 'Please try again later.',
+  return res.status(500).json({
+    status: 'error',
+    message: 'Something went very wrong!',
   });
 };
 
@@ -93,16 +103,36 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, req, res);
   } else if (process.env.NODE_ENV === 'production') {
-    let error = { ...err };
+    // The old code did `let error = { ...err }`. Spreading an Error loses
+    // its non-enumerable properties — name, message and code — so the
+    // CastError / duplicate-key / ValidationError / JWT checks below never
+    // matched in production and every error fell through as a generic 500.
+    // Copy the error while preserving those properties explicitly.
+    const error = Object.create(
+      Object.getPrototypeOf(err),
+      Object.getOwnPropertyDescriptors(err)
+    );
     error.message = err.message;
+    error.statusCode = err.statusCode;
+    error.status = err.status;
+    error.isOperational = err.isOperational;
 
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-    if (error.name === 'ValidationError')
-      error = handleValidationErrorDB(error);
-    if (error.name === 'JsonWebTokenError') error = handleJWTError();
-    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+    let handledError = error;
+    if (handledError.name === 'CastError')
+      handledError = handleCastErrorDB(handledError);
+    if (handledError.code === 11000)
+      handledError = handleDuplicateFieldsDB(handledError);
+    if (handledError.name === 'ValidationError')
+      handledError = handleValidationErrorDB(handledError);
+    if (handledError.name === 'JsonWebTokenError')
+      handledError = handleJWTError();
+    if (handledError.name === 'TokenExpiredError')
+      handledError = handleJWTExpiredError();
 
-    sendErrorProd(error, req, res);
+    sendErrorProd(handledError, req, res);
+  } else {
+    // NODE_ENV unset / anything else: treat like production (never leak
+    // stack traces by default).
+    sendErrorProd(err, req, res);
   }
 };

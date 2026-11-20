@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets — never commit these
+# server.js loads ./config.env; copy .env.example to config.env locally.
+.env
+.env.*
+config.env
+config.*.env
+!.env.example
+
+# Uploaded / generated images
+public/img/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

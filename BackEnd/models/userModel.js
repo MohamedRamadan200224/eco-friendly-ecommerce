@@ -34,6 +34,16 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please provide a password'],
       minlength: 8,
       select: false,
+      validate: {
+        validator: function (value) {
+          // At least 8 characters, at least one letter and one number.
+          // (minlength above enforces the length; the regex enforces
+          // the character mix so 'password' / '12345678' are rejected.)
+          return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(value);
+        },
+        message:
+          'Password must be at least 8 characters long and include at least one letter and one number.',
+      },
     },
     passwordConfirm: {
       type: String,
@@ -57,8 +67,14 @@ const userSchema = new mongoose.Schema(
       select: true,
     },
     passwordChangedAt: Date,
-    passwordResetToken: String,
-    passwordResetExpires: Date,
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
     active: {
       type: Boolean,
       default: true,
@@ -125,8 +141,8 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
-
+  // NOTE: the plain reset token is deliberately NOT logged here. It is
+  // only ever sent to the user's email address.
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;

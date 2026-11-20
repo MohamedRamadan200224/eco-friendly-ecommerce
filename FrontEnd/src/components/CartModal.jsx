@@ -2,7 +2,8 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { getAuthToken, getAuthUser } from "../helper/Storage";
+// Auth is cookie-based: the backend sets an httpOnly `jwt` cookie and
+// axios calls use withCredentials. No token is read from storage here.
 import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
@@ -11,14 +12,19 @@ import Skeleton from "react-loading-skeleton";
 import { loadStripe } from "@stripe/stripe-js";
 import { ClipLoader } from "react-spinners";
 
-const stripePromise = loadStripe(
-  "pk_test_51PCOfv05mtZeaC1xDQIDUrtTfB8M6pQ17DaHV7A7thWTVDoRyLeUmoT3hdY6fnmDzmrmUCFvbpEoz3IGFcn1GyZb00yRBSXUzG"
-);
+// Publishable key only (safe to expose in the browser), read from the
+// environment. Set VITE_STRIPE_PUBLISHABLE_KEY in FrontEnd/.env — see
+// FrontEnd/.env.example. Checkout is disabled if it is not configured.
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey
+  ? loadStripe(stripePublishableKey)
+  : null;
+
+// API base URL from the environment (defaults to the local backend).
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const CartModal = ({ onClose }) => {
-  const user = getAuthUser();
   let respStatus1 = useRef("fail");
-  const auth = getAuthToken();
   const [totalPrice, setTotalPrice] = useState(0);
   // const stripe = useStripe();
 
@@ -36,19 +42,16 @@ const CartModal = ({ onClose }) => {
       loading: true,
     });
 
-    axios
-      .get(`http://localhost:3000/api/v1/addToCart/myCart`, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    axios.get(`${API_URL}/api/v1/addToCart/myCart`, {
+      withCredentials: true,
+    })
       .then((resp) => {
         let products = [];
         respStatus1.current = resp.data.status;
         products = resp.data.data;
         if (products) {
           const initialQuantities = products.reduce((acc, item) => {
-            acc[item.product.id] = 1; // Assuming the initial quantity is 1 for each item
+            acc[item.product.id] = item.quantity || 1;
             return acc;
           }, {});
 
@@ -76,12 +79,9 @@ const CartModal = ({ onClose }) => {
   const removeItem = (e, id) => {
     e.preventDefault();
     setCart({ ...cart, loading: true, reload: 0 });
-    axios
-      .delete(`http://localhost:3000/api/v1/addToCart/myCart/${id}`, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    axios.delete(`${API_URL}/api/v1/addToCart/myCart/${id}`, {
+      withCredentials: true,
+    })
       .then((resp) => {
         respStatus1.current = resp.data.status;
         setCart({
@@ -107,12 +107,9 @@ const CartModal = ({ onClose }) => {
   const deleteAll = (e, id) => {
     e.preventDefault();
     setCart({ ...cart, loading: true, reload: 0 });
-    axios
-      .delete(`http://localhost:3000/api/v1/addToCart/myCart`, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    axios.delete(`${API_URL}/api/v1/addToCart/myCart`, {
+      withCredentials: true,
+    })
       .then((resp) => {
         respStatus1.current = resp.data.status;
         setCart({
@@ -158,16 +155,11 @@ const CartModal = ({ onClose }) => {
       const newQuantity = prevCart.quantities[id] + delta;
       if (newQuantity < 1) return prevCart; // Prevent negative quantities
 
-      axios
-        .patch(
-          `http://localhost:3000/api/v1/addToCart/myCart/${id}`,
-          { quantity: newQuantity },
-          {
-            headers: {
-              Authorization: `Bearer ${auth.jwtToken}`,
-            },
-          }
-        )
+      axios.patch(
+        `${API_URL}/api/v1/addToCart/myCart/${id}`,
+        { quantity: newQuantity },
+        { withCredentials: true }
+      )
         .then(() => {
           updateQuantity(id, newQuantity);
         })
@@ -186,13 +178,14 @@ const CartModal = ({ onClose }) => {
   };
 
   const handleCheckout = async () => {
+    if (!stripePromise) {
+      toast.error("Checkout is not configured. Please try again later.");
+      return;
+    }
     const stripe = await stripePromise;
-    axios
-      .get(`http://localhost:3000/api/v1/addToCart/Checkout-session`, {
-        headers: {
-          Authorization: `Bearer ${auth.jwtToken}`,
-        },
-      })
+    axios.get(`${API_URL}/api/v1/addToCart/Checkout-session`, {
+      withCredentials: true,
+    })
       .then(async (resp) => {
         const sessionId = resp.data.session.id;
         // When the customer clicks on the button, redirect them to Checkout.
@@ -250,7 +243,7 @@ const CartModal = ({ onClose }) => {
                                   <div className="shrink-0">
                                     <img
                                       className="object-cover w-24 h-24 max-w-full rounded-lg"
-                                      src={`http://localhost:3000/img/${item.product.category}/${item.product.imageCover}`}
+                                      src={`${API_URL}/img/${item.product.category}/${item.product.imageCover}`}
                                       alt="Product"
                                     />
                                   </div>

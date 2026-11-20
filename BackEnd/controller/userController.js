@@ -76,7 +76,10 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     );
   }
 
-  const filteredBody = filterObj(req.body, ['name', 'email', 'photo', 'role']);
+  // SECURITY: 'role' was in this allowlist, so any logged-in user could
+  // promote themselves to admin by PATCHing /updateMe with { role: 'admin' }.
+  // Only name / email / photo may be changed here.
+  const filteredBody = filterObj(req.body, ['name', 'email', 'photo']);
 
   if (req.file) {
     filteredBody.photo = req.file.filename;
@@ -127,10 +130,36 @@ exports.getMe = (req, res, next) => {
 exports.getAllUsers = handlerFactory.getAll(User, 'user');
 
 //do not update password with this
+// NOTE: handlerFactory.updateOne strips password / role / isCertified /
+// rewardPoints, so an admin can no longer change a user's role or password
+// through this generic route. Role changes need a dedicated admin endpoint.
 exports.updateUser = handlerFactory.updateOne(User);
 
 exports.getUser = handlerFactory.getOne(User, 'user');
 
 exports.deleteUser = handlerFactory.deleteOne(User);
 
-exports.createUser = handlerFactory.createOne(User, 'user');
+// Admin-only user creation. This is the ONE place that may accept a
+// password and a role from a request body, and the route is protected by
+// restrictTo('admin') in userRoutes.js. It deliberately does not use the
+// generic handlerFactory.createOne, which never accepts those fields.
+exports.createUser = catchAsync(async (req, res, next) => {
+  const allowedFields = filterObj(req.body, [
+    'name',
+    'email',
+    'password',
+    'passwordConfirm',
+    'role',
+  ]);
+
+  const doc = await User.create(allowedFields);
+
+  doc.password = undefined;
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});

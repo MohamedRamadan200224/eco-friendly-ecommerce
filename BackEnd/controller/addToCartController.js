@@ -1,16 +1,44 @@
+const mongoose = require('mongoose');
 const AddToCart = require('../models/addToCartModel');
-const Order = require('./../models/orderModel');
 const factory = require('./handlerFactory');
 const AppError = require('./../utils/appError');
-const Email = require('./../utils/email');
-const nodeHtmlToImage = require('node-html-to-image');
 const catchAsync = require('./../utils/catchAsync');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { isEmpty } = require('validator');
 const User = require('./../models/userModel');
 const Product = require('./../models/productModel');
 
+const MIN_POINTS_REQUIRED = 100; // Minimum points required to redeem for a discount
+
+// The cart's products.product is populated by the model's pre-find hook,
+// so it may be a full Product document or (in some paths) a bare ObjectId.
+// Normalise both to the id string before comparing.
+const cartProductId = (item) =>
+  item.product && item.product._id
+    ? item.product._id.toString()
+    : String(item.product);
+
+// Coupon ids are configuration, not code. Set them in the environment;
+// when they are not configured, no coupon is applied instead of silently
+// using a hard-coded test coupon id.
+const getRewardCouponId = () => process.env.STRIPE_REWARD_COUPON_ID || null;
+const getEcoCouponId = () => process.env.STRIPE_ECO_COUPON_ID || null;
+
+// Lazily create the Stripe client so requiring this module does not crash
+// when STRIPE_SECRET_KEY is not set (e.g. in tests / local dev without
+// payments configured). Callers must handle a null return.
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  // eslint-disable-next-line global-require
+  return require('stripe')(process.env.STRIPE_SECRET_KEY);
+};
+
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {
+  const stripe = getStripe();
+  if (!stripe) {
+    return next(
+      new AppError('Payments are not configured on this server.', 503)
+    );
+  }
+
   // 1) Get the cart
   const cart = await AddToCart.findOne({ user: req.user.id }).populate(
     'products.product'
@@ -21,91 +49,119 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 
   // Retrieve user and their points
   const user = await User.findById(req.user.id);
-  const MIN_POINTS_REQUIRED = 100; // Minimum points required to redeem for a discount
 
-  // Coupon IDs
-  const rewardPointsCouponId = 'newCoupon'; // Coupon for reward points
-  const ecoFriendlyCouponId = 'ecofriendly'; // Coupon for eco-friendly discount
-
-  // Initialize variables
+  // Decide which coupon (if any) applies. This only DECIDES — nothing is
+  // mutated here. Reward points and stock are only changed after Stripe
+  // confirms the payment, in the webhook handler (webhookController.js).
+  // The old code deducted points and decremented stock here, before any
+  // payment, and then created the order unconditionally (see the removed
+  // completePurchase chaining in addToCartRoutes.js).
   let selectedCouponId = null;
+  let rewardCouponApplied = false;
 
-  // Check if the user has at least MIN_POINTS_REQUIRED
-  if (user.rewardPoints >= MIN_POINTS_REQUIRED) {
-    selectedCouponId = rewardPointsCouponId;
-    // Deduct reward points from the user's account
-    user.rewardPoints -= MIN_POINTS_REQUIRED;
-    await user.save({ validateBeforeSave: false });
+  if (user && user.rewardPoints >= MIN_POINTS_REQUIRED) {
+    selectedCouponId = getRewardCouponId();
+    rewardCouponApplied = Boolean(selectedCouponId);
   } else {
     // Check for products that are not harmful to the environment
     const hasEcoFriendlyProduct = cart.products.some(
-      (el) => el.product.harmfultoenv === false
+      (el) => el.product && el.product.harmfultoenv === false
     );
 
     if (hasEcoFriendlyProduct) {
-      selectedCouponId = ecoFriendlyCouponId;
+      selectedCouponId = getEcoCouponId();
     }
   }
 
   // Apply the selected coupon if any discount is applicable
-  let discounts = [];
+  const discounts = [];
   if (selectedCouponId) {
     discounts.push({ coupon: selectedCouponId });
   }
 
-  // Create a Checkout Session with the discounts applied
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    success_url: `${req.protocol}://localhost:5173/profile`,
-    cancel_url: `${req.protocol}://localhost:5173/`,
-    customer_email: req.user.email,
-    client_reference_id: req.user.id,
-    mode: 'payment',
-    line_items: cart.products.map((el) => ({
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+  // Validate line items: a product may have been deleted since it was
+  // added to the cart, and prices must become integer cents.
+  const lineItems = [];
+  for (const el of cart.products) {
+    if (!el.product) {
+      return next(
+        new AppError(
+          'One of the products in your cart is no longer available.',
+          400
+        )
+      );
+    }
+    if (el.product.stockQuantity < el.quantity) {
+      return next(
+        new AppError(
+          `Not enough stock for ${el.product.name}. Only ${el.product.stockQuantity} left.`,
+          400
+        )
+      );
+    }
+    lineItems.push({
       price_data: {
         currency: 'usd',
         product_data: {
           name: el.product.name,
           description: el.product.specifications,
         },
-        unit_amount: el.product.price * 100, // Assuming price is in dollars
+        unit_amount: Math.round(el.product.price * 100),
       },
       quantity: el.quantity,
-    })),
-    discounts: discounts,
-  });
-
-  for (let el of cart.products) {
-    let product = await Product.findById(el.product._id);
-    product.soldNum += el.quantity;
-    product.stockQuantity -= el.quantity;
-    await product.save({ validateBeforeSave: false });
+    });
   }
 
+  // Create a Checkout Session with the discounts applied
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    success_url: `${frontendUrl}/profile`,
+    cancel_url: `${frontendUrl}/`,
+    customer_email: req.user.email,
+    client_reference_id: req.user.id,
+    mode: 'payment',
+    line_items: lineItems,
+    discounts,
+    metadata: {
+      userId: req.user.id,
+      rewardCouponApplied: String(rewardCouponApplied),
+    },
+  });
+
+  // NOTE: no stock / points mutation and no order creation here. The order
+  // is created by the Stripe webhook (checkout.session.completed) only
+  // after the payment is verified. See controller/webhookController.js.
   res.status(200).json({
     status: 'success',
     session,
   });
-  next();
 });
 
 exports.getMyCartItems = catchAsync(async (req, res, next) => {
   const cartItems = await AddToCart.find({
     user: req.user._id,
   });
-  let totalPrice = 0;
 
-  cartItems[0].products.forEach((product) => {
-    totalPrice += product.product.price;
-  });
-
-  if (cartItems.length === 0) {
+  // The old code accessed cartItems[0].products BEFORE checking whether
+  // the cart existed, crashing with "Cannot read properties of undefined"
+  // on an empty cart.
+  if (cartItems.length === 0 || cartItems[0].products.length === 0) {
     return next(new AppError("You don't have any items in your cart!", 400));
   }
 
+  let totalPrice = 0;
+
+  cartItems[0].products.forEach((item) => {
+    if (!item.product) return;
+    // Total is price x quantity, not just the unit price.
+    totalPrice += item.product.price * item.quantity;
+  });
+
   res.status(200).json({
     status: 'success',
-    totalPrice: totalPrice,
+    totalPrice,
     data: cartItems[0].products,
   });
 });
@@ -113,7 +169,11 @@ exports.getMyCartItems = catchAsync(async (req, res, next) => {
 exports.addItemToCart = catchAsync(async (req, res, next) => {
   const productId = req.params.id;
   const userId = req.user.id;
-  const quantity = req.body.quantity || 1;
+  const quantity = Number(req.body.quantity) || 1;
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return next(new AppError('Quantity must be a positive integer.', 400));
+  }
 
   // Find the cart for the current user
   let cart = await AddToCart.findOne({ user: userId });
@@ -123,15 +183,19 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
     cart = await AddToCart.create({ user: userId, products: [] });
   }
 
-  let product = await Product.findOne({ _id: productId });
+  const product = await Product.findOne({ _id: productId });
 
-  if (product.stockQuantity === 0) {
+  if (!product) {
+    return next(new AppError('No product found with that ID', 404));
+  }
+
+  if (product.stockQuantity === 0 || product.stockQuantity < quantity) {
     return next(new AppError('This Product Is Out Of Stock!', 400));
   }
 
   // Check if the product is already in the cart
   const itemIndex = cart.products.findIndex(
-    (item) => item.product.id === productId
+    (item) => cartProductId(item) === productId
   );
 
   if (itemIndex >= 0) {
@@ -139,11 +203,9 @@ exports.addItemToCart = catchAsync(async (req, res, next) => {
     return next(
       new AppError('You Have Already Added This Product In Your Cart!', 400)
     );
-  } else {
-    // If the product is not in the cart, add it
-
-    cart.products.push({ product: productId, quantity });
   }
+  // If the product is not in the cart, add it
+  cart.products.push({ product: productId, quantity });
 
   // Save the updated cart
   const updatedCart = await cart.save();
@@ -158,10 +220,6 @@ exports.deleteItemFromCart = catchAsync(async (req, res, next) => {
   const productId = req.params.id;
   const userId = req.user.id;
 
-  console.log(
-    `Attempting to delete product with ID: ${productId} for user: ${userId}`
-  );
-
   // Find the cart for the current user
   let cart = await AddToCart.findOne({ user: userId });
 
@@ -171,10 +229,13 @@ exports.deleteItemFromCart = catchAsync(async (req, res, next) => {
 
   // Check if the product is in the cart
   const itemIndex = cart.products.findIndex(
-    (item) => item.product.toString() === productId
+    (item) => cartProductId(item) === productId
   );
 
-  if (!itemIndex) {
+  // The old code used `if (!itemIndex)`: index 0 is falsy (so the first
+  // item could never be deleted) and -1 is truthy (so a missing item
+  // passed the check and splice(-1, 1) removed the LAST item).
+  if (itemIndex === -1) {
     return next(
       new AppError('No product found with that ID in the cart!', 400)
     );
@@ -186,16 +247,8 @@ exports.deleteItemFromCart = catchAsync(async (req, res, next) => {
   // Save the updated cart
   const updatedCart = await cart.save();
 
-  // let totalPrice = 0;
-  // console.log(updatedCart[0].product.price);
-
-  // updatedCart.map((product) => {
-  //   totalPrice += product.product.price;
-  // });
-
   res.status(200).json({
     status: 'success',
-
     data: updatedCart,
   });
 });
@@ -203,24 +256,37 @@ exports.deleteItemFromCart = catchAsync(async (req, res, next) => {
 exports.updateItemQuantity = catchAsync(async (req, res, next) => {
   const productId = req.params.id;
   const userId = req.user.id;
-  const newQuantity = req.body.quantity;
+  const newQuantity = Number(req.body.quantity);
+
+  if (!Number.isInteger(newQuantity) || newQuantity < 1) {
+    return next(new AppError('Quantity must be a positive integer.', 400));
+  }
 
   // Find the cart for the current user
-  let cart = await AddToCart.findOne({ user: userId });
+  const cart = await AddToCart.findOne({ user: userId });
 
   if (!cart) {
     return next(new AppError('No cart found for the user!', 400));
   }
 
   // Check if the product is in the cart
-  const itemIndex = cart.products.findIndex((item) =>
-    item.product.equals(productId)
+  const itemIndex = cart.products.findIndex(
+    (item) => cartProductId(item) === productId
   );
 
   if (itemIndex === -1) {
     return next(new AppError('No product found with that ID!', 400));
   }
-  if (cart.products[itemIndex].product.stockQuantity < newQuantity) {
+
+  // Read stock from the Product document itself, not from the (possibly
+  // unpopulated) cart reference. The old code read
+  // cart.products[itemIndex].product.stockQuantity, which is undefined
+  // when the embedded product is only an ObjectId.
+  const product = await Product.findById(productId);
+  if (!product) {
+    return next(new AppError('No product found with that ID!', 404));
+  }
+  if (product.stockQuantity < newQuantity) {
     return next(new AppError('This Product Is Out Of Stock!', 400));
   }
 
@@ -236,34 +302,10 @@ exports.updateItemQuantity = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.completePurchase = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
-
-  // Find the cart for the current user
-  let cart = await AddToCart.findOne({ user: userId });
-
-  if (!cart || cart.products.length === 0) {
-    return next(new AppError('You have no items in your cart!', 400));
-  }
-
-  // Create a new order with the products from the cart
-  const order = await Order.create({ user: userId, products: cart.products });
-
-  // Clear the user's cart
-
-  // Delete the user's cart
-  await AddToCart.findByIdAndDelete(cart._id);
-
-  res.status(200).json({
-    status: 'success',
-    data: { order },
-  });
-});
-
 exports.deleteAllItems = catchAsync(async (req, res, next) => {
   const user = req.user.id;
 
-  const cart = await AddToCart.findOne({ user: user });
+  const cart = await AddToCart.findOne({ user });
 
   if (!cart) {
     return next(
@@ -274,7 +316,7 @@ exports.deleteAllItems = catchAsync(async (req, res, next) => {
   cart.products = [];
   await cart.save();
 
-  res.status(201).json({
+  res.status(200).json({
     status: 'success',
   });
 });

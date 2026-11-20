@@ -82,6 +82,11 @@ reviewSchema.pre(/^find/, function (next) {
   next();
 });
 
+// One review per user per product. The application-level check
+// (checkIfDoneBefore) has a race: two concurrent requests can both pass
+// it and create duplicates. The unique index is the real guarantee.
+reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+
 const Review = mongoose.model('Review', reviewSchema);
 
 module.exports = Review;

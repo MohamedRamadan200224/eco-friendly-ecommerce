@@ -42,6 +42,10 @@ voteSchema.pre(/^find/, function (next) {
   next();
 });
 
+// One vote per user per product (see Review model for why the unique
+// index, not just the application-level check, is the guarantee).
+voteSchema.index({ product: 1, user: 1 }, { unique: true });
+
 const Vote = mongoose.model('Vote', voteSchema);
 
 module.exports = Vote;

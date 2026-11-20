@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const productRouter = require('./routes/productRoutes');
 const voteRouter = require(`./routes/voteRoutes`);
 const userRouter = require(`./routes/userRoutes`);
@@ -11,6 +12,7 @@ const orderRouter = require('./routes/orderRoutes');
 const expertApplyRouter = require('./routes/expertApplyRoutes');
 const schedule = require('node-schedule');
 const addToCartRouter = require('./routes/addToCartRoutes');
+const webhookRouter = require('./routes/webhookRoutes');
 const errorController = require('./controller/errorController');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -21,13 +23,29 @@ const cors = require('cors');
 const User = require('./models/userModel');
 const Product = require('./models/productModel');
 
-app.use(express.json());
+// Stripe webhook FIRST, before any body parser: Stripe's signature is
+// computed over the raw request body, and the webhook router applies
+// express.raw() itself. If express.json() ran first, signature
+// verification would always fail. See routes/webhookRoutes.js.
+app.use('/api/v1/webhooks/stripe', webhookRouter);
+
+//bodyParser, reading data from body into req.body
+// NOTE: the old code called express.json() twice — once here with no
+// limit, and once later with limit '50kb'. Only the limited one remains.
+app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/img', express.static('public/img'));
 
+// Parse cookies so authController.protect can read the httpOnly `jwt`
+// cookie set on login / signup. (cookie-parser was already a dependency
+// but was never registered as middleware.)
+app.use(cookieParser());
+
 app.use(
   cors({
-    origin: 'http://localhost:5173', // replace with your URL
+    // Configured via FRONTEND_URL in production; defaults to the Vite
+    // dev server. The old value was hard-coded to localhost:5173.
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
     methods: 'GET,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Authorization',
@@ -60,8 +78,6 @@ app.use(
     whitelist: ['ratingsQuantity', 'ratingsAverage', 'price'],
   })
 );
-//bodyParser, reading data from body into req.body
-app.use(express.json({ limit: '50kb' }));
 
 //serving static files
 // app.use(express.static(`${__dirname}/public`));
@@ -124,12 +140,14 @@ app.use('/api/v1/myOrders', orderRouter);
 app.use('/api/v1/applyCertificate', certificateRouter);
 app.use('/api/v1/expertApply', expertApplyRouter);
 
-app.all('*', (req, res, next) => {
+app.all('*', (req, res) => {
+  // The old handler sent the 404 response AND called next(), so the
+  // request continued into the error handler after a response had
+  // already been sent ("Cannot set headers after they are sent").
   res.status(404).json({
     status: 'fail',
     message: `Can't find ${req.originalUrl} on the server`,
   });
-  next();
 });
 
 app.use(errorController);

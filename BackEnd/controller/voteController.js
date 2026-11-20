@@ -15,17 +15,13 @@ const getAllVotes = (Model) =>
 
     const features = new APIFeatures(Model.find(filter), req.query)
       .filter()
-      .sort({ upvoteNum: -1 })
+      .sort()
       .limitFields()
       .paginate();
 
     const docs = await features.query;
 
-    if (!docs) {
-      return next(new AppError('No votes were found!', 404));
-    }
-
-    // SEND RESPONSE
+    // An empty list is a valid result, not a 404.
     res.status(200).json({
       status: 'success',
       results: docs.length,
@@ -55,47 +51,31 @@ const createVote = (voteModel, productModel) =>
 
     const reportedProduct = await productModel.findById(req.params.productId);
 
+    if (!reportedProduct) {
+      return next(new AppError('No product found with that ID', 404));
+    }
+
     //check if product score is already assessed
-    if (
-      req.body.report === true &&
-      reportedProduct.environmentalImpactAssessed === true
-    ) {
-      //if the score greater than or equal to 10 then update the harmfulToEnv to false else if it's score less than 10 and reports is greater than 5 then harmfultoEnv to true
-      if (reportedProduct.environmentalScore >= 10) {
-        reportedProduct.reportsNum = reportedProduct.reportsNum + 1;
-        reportedProduct.harmfultoenv = false;
-      } else if (
-        reportedProduct.reportsNum + 1 > reportedProduct.noReportsNum &&
-        reportedProduct.environmentalScore < 10
-      ) {
-        reportedProduct.reportsNum = reportedProduct.reportsNum + 1;
-        reportedProduct.harmfultoenv = true;
-      } else if (
-        reportedProduct.reportsNum + 1 <= reportedProduct.noReportsNum &&
-        reportedProduct.environmentalScore < 10
-      ) {
-        reportedProduct.reportsNum = reportedProduct.reportsNum + 1;
+    if (reportedProduct.environmentalImpactAssessed === true) {
+      // NOTE: the schema fields are reportsNumber / noReportsNumber.
+      // The old code incremented reportsNum / noReportsNum, which do not
+      // exist on the schema — Mongoose (strict mode) silently dropped
+      // them, so vote counts never changed and harmfultoenv was computed
+      // from stale counters.
+      if (req.body.report === true) {
+        reportedProduct.reportsNumber += 1;
+      } else if (req.body.report === false) {
+        reportedProduct.noReportsNumber += 1;
       }
-      await reportedProduct.save();
-    } else if (
-      req.body.report === false &&
-      reportedProduct.environmentalImpactAssessed === true
-    ) {
-      //if the score greater than or equal to 10 then update the harmfulToEnv to false else if it's score less than 10 and reports is greater than 5 then harmfultoEnv to true
+
+      // A product with a passing environmental score is never harmful,
+      // regardless of votes. Otherwise it is harmful when reports
+      // outnumber non-reports.
       if (reportedProduct.environmentalScore >= 10) {
-        reportedProduct.noReportsNum = reportedProduct.noReportsNum + 1;
         reportedProduct.harmfultoenv = false;
-      } else if (
-        reportedProduct.noReportsNum + 1 > reportedProduct.reportsNum &&
-        reportedProduct.environmentalScore < 10
-      ) {
-        reportedProduct.noReportsNum = reportedProduct.noReportsNum + 1;
-        reportedProduct.harmfultoenv = false;
-      } else if (
-        reportedProduct.noReportsNum + 1 <= reportedProduct.reportsNum &&
-        reportedProduct.environmentalScore < 10
-      ) {
-        reportedProduct.noReportsNum = reportedProduct.noReportsNum + 1;
+      } else {
+        reportedProduct.harmfultoenv =
+          reportedProduct.reportsNumber > reportedProduct.noReportsNumber;
       }
 
       await reportedProduct.save();
