@@ -3,7 +3,6 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useRef } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
@@ -30,7 +29,7 @@ const DeleteModal = ({ onClose, id }) => {
         }
         navigate("/profile");
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
       });
   };

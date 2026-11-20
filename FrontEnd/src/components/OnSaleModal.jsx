@@ -3,15 +3,12 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
 import { getAuthUser } from "../helper/Storage";
 
 const OnSaleModal = ({ onClose, productInfo }) => {
-  const navigate = useNavigate();
-  const user = getAuthUser();
 
   const initialProductInfo = {
     ...productInfo,
@@ -24,8 +21,12 @@ const OnSaleModal = ({ onClose, productInfo }) => {
     loading: true,
   });
   useEffect(() => {
-    if (user && user.role === "company") {
-      setLocalProductInfo({ ...localProductInfo, owner: user.id });
+    // Read the logged-in user here (mount-time value): getAuthUser() returns
+    // a new object on every call, so it cannot be a dependency without
+    // re-running this effect on every render.
+    const currentUser = getAuthUser();
+    if (currentUser && currentUser.role === "company") {
+      setLocalProductInfo((l) => ({ ...l, owner: currentUser.id }));
     }
   }, []);
 
@@ -55,7 +56,7 @@ const OnSaleModal = ({ onClose, productInfo }) => {
           });
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
         setLocalProductInfo({ ...localProductInfo });
         setCondition({ ...condition, status: "error", loading: false });

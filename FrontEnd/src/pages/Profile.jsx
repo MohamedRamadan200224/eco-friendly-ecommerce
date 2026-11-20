@@ -19,7 +19,7 @@
 // Role gates use the stored user, not getAuthToken(): the token helper
 // returns undefined since auth moved to an httpOnly cookie (security
 // PR #1), so the old `auth && user.role === ...` checks never passed.
-import React, { useState } from "react";
+import { useState } from "react";
 import { getAuthUser } from "../helper/Storage";
 import { Link } from "react-router-dom";
 import EditProfile from "../components/profile/EditProfile";

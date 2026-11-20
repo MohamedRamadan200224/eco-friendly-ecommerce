@@ -9,7 +9,7 @@
 // The frontend always calls the real API now (owner decision, 2026-11-19):
 // the old isDevelopment() / mock-data branch is gone. All requests go
 // through the shared api client (cookie auth, one shared error toast).
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getAuthUser } from "../helper/Storage";
 import toast from "react-hot-toast";

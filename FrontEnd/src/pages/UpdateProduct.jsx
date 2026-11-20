@@ -3,11 +3,10 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
-import Header from "../components/Header";
 import { getAuthUser } from "../helper/Storage";
 
 const UpdateProduct = () => {
@@ -24,7 +23,10 @@ const UpdateProduct = () => {
     harmfultoenv: false,
     imageCover: null,
   });
-  const [loading, setLoading] = useState(true);
+
+  // `loading` itself is never rendered; only the setter is used to clear the
+  // spinner state after the fetch, so the first element is elided.
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     api
@@ -34,7 +36,7 @@ const UpdateProduct = () => {
         setProduct(resp.data.data.data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
         setLoading(false);
       });
@@ -66,7 +68,7 @@ const UpdateProduct = () => {
           navigate("/profile");
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
       });
   };

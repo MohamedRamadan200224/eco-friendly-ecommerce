@@ -3,14 +3,12 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
 import { getAuthUser } from "../helper/Storage";
 
 const EditModal = ({ onClose, productInfo }) => {
-  const navigate = useNavigate();
   const user = getAuthUser();
 
   // const [product, setProduct] = useState({
@@ -73,7 +71,7 @@ const EditModal = ({ onClose, productInfo }) => {
           });
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
         setLocalProductInfo({ ...localProductInfo });
         setCondition({ ...condition, status: "error", loading: false });

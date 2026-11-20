@@ -7,7 +7,6 @@
 // All requests go through the shared api client (cookie auth, one shared
 // error toast). Image URLs are built with the client's imageUrl helper,
 // not a hardcoded localhost string.
-import React from "react";
 import { Link } from "react-router-dom";
 import { TbViewportWide } from "react-icons/tb";
 import { MdEdit } from "react-icons/md";

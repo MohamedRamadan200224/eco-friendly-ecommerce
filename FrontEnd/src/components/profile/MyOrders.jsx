@@ -8,7 +8,6 @@
 // All requests go through the shared api client (cookie auth, one shared
 // error toast). Image URLs are built with the client's imageUrl helper,
 // not a hardcoded localhost string.
-import React from "react";
 import { ClipLoader } from "react-spinners";
 import api, { imageUrl } from "../../api/client";
 import { useApiList } from "../../hooks/useApiList";

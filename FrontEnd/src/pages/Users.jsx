@@ -10,7 +10,7 @@
 // The delete state was `deleteuser` / `setdeleteUser` (inconsistent
 // casing, and it collided with the `deleteUser` handler name). It is now
 // `deleteUser` / `setDeleteUser`, and the handler is `handleDeleteUser`.
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
 import { Link } from "react-router-dom";

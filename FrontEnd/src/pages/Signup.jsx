@@ -8,7 +8,7 @@
 // setAuthToken() call is kept as-is: it is the deprecated no-op from
 // the cookie-auth PR #1 (the JWT lives in an httpOnly cookie; removing
 // the call is that PR's follow-up, not this pass).
-import React, { useState } from "react";
+import { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router";
 import { setAuthToken, setAuthUser } from "../helper/Storage";

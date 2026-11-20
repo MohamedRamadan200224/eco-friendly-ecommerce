@@ -1,4 +1,3 @@
-import React from "react";
 import { FaFacebookSquare, FaInstagram, FaTwitterSquare } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { getAuthToken } from "../helper/Storage";

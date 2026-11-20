@@ -14,12 +14,11 @@
 // error toast). The logged-in check is the stored user, not
 // getAuthToken(): the token helper returns undefined since auth moved to
 // an httpOnly cookie (security PR #1).
-import React, { useState } from "react";
+import { useState } from "react";
 import Header from "../components/Header";
 import { GoPlus } from "react-icons/go";
 import Modal from "../components/Modal";
 import { getAuthUser } from "../helper/Storage";
-import { Link } from "react-router-dom";
 import { FaMedal } from "react-icons/fa";
 import { ClipLoader } from "react-spinners";
 import api, { imageUrl } from "../api/client";

@@ -3,13 +3,11 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import { getAuthUser } from "../helper/Storage";
 import toast from "react-hot-toast";
 
 const ViewModal = ({ onClose, productInfo }) => {
-  const user = getAuthUser();
   let respStatus2 = useRef("fail");
 
   const [product, setProduct] = useState({
@@ -23,26 +21,26 @@ const ViewModal = ({ onClose, productInfo }) => {
       .get(`/api/v1/products/${productInfo.id}`)
       .then((resp) => {
         respStatus2.current = resp.data.status;
-        setProduct({
-          ...product,
+        setProduct((p) => ({
+          ...p,
           result: resp.data.data.data,
           status: resp.data.status,
           loading: false,
-        });
+        }));
 
         if (resp.data.status === "fail") {
           toast.error(resp.data.message);
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
-        setProduct({
-          ...product,
+        setProduct((p) => ({
+          ...p,
           status: respStatus2.current,
           loading: false,
-        });
+        }));
       });
-  }, []);
+  }, [productInfo.id]);
 
   return (
     <div className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-black bg-opacity-30 backdrop-blur-sm">

@@ -13,7 +13,7 @@
 // error toast). No raw axios, no hardcoded backend URL, no Authorization
 // header: the old `Bearer ${auth.jwtToken}` headers are gone — auth is
 // the httpOnly cookie now, and getAuthToken() returns undefined anyway.
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
 import api, { userImageUrl } from "../../api/client";

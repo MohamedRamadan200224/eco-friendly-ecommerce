@@ -11,7 +11,7 @@
 // helper: the old code passed the raw imageCover filename as the src,
 // which only worked for mock data ("/ElectricCar.png") and never for
 // real API products.
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Testimonials from "../components/Testimonials";
 import { useNavigate } from "react-router";
 import Vision from "../components/Vision";
@@ -42,12 +42,12 @@ const Home = () => {
     const getProducts = async () => {
       const resp = await api.get(`/api/v1/products?onSale=true`);
 
-      setProducts({
-        ...products,
+      setProducts((p) => ({
+        ...p,
         results: resp.data.data.data,
         status: resp.data.status,
         loading: false,
-      });
+      }));
     };
 
     getProducts();

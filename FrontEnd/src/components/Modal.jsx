@@ -2,7 +2,7 @@
 // no raw axios, no hardcoded localhost URL, no Authorization header
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { getAuthUser } from "../helper/Storage";

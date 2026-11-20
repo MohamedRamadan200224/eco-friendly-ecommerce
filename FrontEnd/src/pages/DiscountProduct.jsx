@@ -3,13 +3,11 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
-import { useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
 const DiscountProduct = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
   const [productInfo, setProductInfo] = useState({
     result: "",
@@ -26,23 +24,23 @@ const DiscountProduct = () => {
         if (resp.data.status === "success") {
           // Show success message
 
-          setProductInfo({
-            ...productInfo,
+          setProductInfo((p) => ({
+            ...p,
             result: resp.data.data.data,
             status: resp.data.status,
             loading: false,
-          });
+          }));
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
-        setProductInfo({
-          ...productInfo,
+        setProductInfo((p) => ({
+          ...p,
           status: "fail",
           loading: false,
-        });
+        }));
       });
-  }, []);
+  }, [id]);
 
   const discountProduct = (e) => {
     e.preventDefault();
@@ -62,7 +60,7 @@ const DiscountProduct = () => {
           toast.success("Product Is Successfully onSale!");
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
       });
   };

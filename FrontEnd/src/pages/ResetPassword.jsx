@@ -3,8 +3,7 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useState } from "react";
-import Header from "../components/Header";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { setAuthToken, setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";

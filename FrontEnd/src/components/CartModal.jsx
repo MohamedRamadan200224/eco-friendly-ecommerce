@@ -1,12 +1,10 @@
 import axios from "axios";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 // Auth is cookie-based: the backend sets an httpOnly `jwt` cookie and
 // axios calls use withCredentials. No token is read from storage here.
 import PropTypes from "prop-types";
-import { useParams } from "react-router-dom";
-import Skeleton from "react-loading-skeleton";
 // import { useStripe } from "@stripe/react-stripe-js";
 /* eslint-disable */
 import { loadStripe } from "@stripe/stripe-js";

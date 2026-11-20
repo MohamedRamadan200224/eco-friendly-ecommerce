@@ -15,7 +15,7 @@
 // no argument and returns an iterator with no .some(), so searching the
 // list threw. The hook's null-safe search over applicationStatus plus
 // the applicant's name / email replaces it.
-import React, { useState } from "react";
+import { useState } from "react";
 import { MdDelete } from "react-icons/md";
 import { FaEye, FaCheck, FaTimes } from "react-icons/fa";
 import { ClipLoader } from "react-spinners";
@@ -39,7 +39,7 @@ const ExpertsList = () => {
     e.preventDefault();
     api
       .delete(`/api/v1/expertApply/${applicationId}`)
-      .then((resp) => {
+      .then(() => {
         toast.success("Expert Application is Successfully Deleted");
         applications.reload();
       })
@@ -55,7 +55,7 @@ const ExpertsList = () => {
       .patch(`/api/v1/expertApply/${applicationId}`, {
         applicationStatus: decision,
       })
-      .then((resp) => {
+      .then(() => {
         toast.success(
           `User's Expert Application Is Successfully ${decision}`
         );

@@ -3,8 +3,7 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useRef, useState } from "react";
-import Header from "../components/Header";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
 import { useParams } from "react-router-dom";
@@ -26,26 +25,24 @@ const CreateUser = () => {
       .get(`/api/v1/users/${id}`)
       .then((resp) => {
         respStatus2.current = resp.data.status;
-        setUser({
-          ...user,
+        setUser((u) => ({
+          ...u,
           result: resp.data.data.data,
-        });
-        setUserCondition({
-          ...userCondition,
+        }));
+        setUserCondition((c) => ({
+          ...c,
           loading: false,
-        });
+        }));
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
-        setUser({
-          ...user,
-        });
-        setUserCondition({
-          ...userCondition,
+        setUser((u) => ({ ...u }));
+        setUserCondition((c) => ({
+          ...c,
           loading: false,
-        });
+        }));
       });
-  }, [userCondition.reload]);
+  }, [id, userCondition.reload]);
 
   const createUser = (e) => {
     e.preventDefault();
@@ -77,7 +74,7 @@ const CreateUser = () => {
           navigate("/");
         }
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
         setUserCondition({
           ...userCondition,

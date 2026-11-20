@@ -3,9 +3,8 @@
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
 import api from "../api/client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
-import toast from "react-hot-toast";
 
 const ExpertsModal = ({ appId, onClose }) => {
 
@@ -21,23 +20,23 @@ const ExpertsModal = ({ appId, onClose }) => {
         `/api/v1/expertApply/${appId}`
       )
       .then((resp) => {
-        setApplication({
-          ...application,
+        setApplication((a) => ({
+          ...a,
           result: resp.data.data,
           status: resp.data.status,
           loading: false,
-          reload: application.reload + 1,
-        });
+          reload: a.reload + 1,
+        }));
       })
-      .catch((err) => {
+      .catch(() => {
         // Error already toasted once by the api client interceptor.
-        setApplication({
-          ...application,
+        setApplication((a) => ({
+          ...a,
           loading: false,
-          reload: application.reload + 1,
-        });
+          reload: a.reload + 1,
+        }));
       });
-  }, []);
+  }, [appId]);
 
   return (
     <div className="fixed inset-0 z-20 flex items-start justify-center p-10 overflow-y-auto bg-black bg-opacity-30 backdrop-blur-sm">

@@ -6,7 +6,6 @@
 // raw axios, no hardcoded backend URL, no Authorization header: the old
 // `Bearer ${auth.jwtToken}` header is gone — auth is the httpOnly cookie
 // now, and getAuthToken() returns undefined anyway.
-import React from "react";
 import toast from "react-hot-toast";
 import api from "../../api/client";
 
