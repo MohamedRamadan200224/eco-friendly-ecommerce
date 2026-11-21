@@ -182,31 +182,6 @@ const Home = () => {
           >
           </Swiper>
         </section>
-        <section className="max-container padding-container m-[96px] rounded-2xl bg-greeny-green py-3 lg:relative lg:grid  lg:grid-cols-2 xl:w-[80%] 3xl:w-[60%]">
-          <div className="mb-6">
-            <p className="mb-[10px] text-[28px] font-bold text-cold-blue xs:text-[32px] lg:w-[70%] lg:text-[36px]">
-              Speak, Your Experiences&nbsp;
-              <span className="text-green-500 underline">Shared</span>
-              &nbsp; now!
-            </p>
-          </div>
-          <div className="flex flex-col place-content-center gap-7">
-            <form action="" className="relative inline-block">
-              <input
-                type="text"
-                className="relative h-[100%] w-full rounded-[500px] border border-light-orange px-[15px] py-[23px]"
-                placeholder="Review our site &#9829;"
-              />
-              <button className="absolute right-2 top-[7.5px] hidden rounded-[200px] bg-cold-blue px-[25px] py-[15px] font-bold text-off-white shadow-md hover:-translate-x-1 hover:shadow-cold-blue xs:block">
-                <FaHandHoldingHeart color="#92e3a9" />
-              </button>
-            </form>
-
-            <button className="flex justify-center rounded-[200px] bg-cold-blue px-[10px] py-[15px] font-bold text-off-white shadow-md hover:-translate-y-1 hover:shadow-cold-blue xs:hidden">
-              <FaHandHoldingHeart color="#92e3a9" />
-            </button>
-          </div>
-        </section>
       </>
 
       {/* THIRD SECTION */}
