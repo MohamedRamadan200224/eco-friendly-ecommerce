@@ -2,7 +2,7 @@
 // no raw axios, no hardcoded localhost URL, no Authorization header
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
-import api from "../api/client";
+import api, { imageUrl, handleImgError } from "../api/client";
 import { useEffect, useRef, useState } from "react";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import toast from "react-hot-toast";
@@ -59,7 +59,11 @@ const ViewModal = ({ onClose, productInfo }) => {
                         <div className="max-w-xl overflow-hidden rounded-lg">
                           <img
                             className="object-cover w-full h-full max-w-full"
-                            src="https://dummyimage.com/300x300"
+                            src={imageUrl(
+                              product.result.category,
+                              product.result.imageCover
+                            )}
+                            onError={handleImgError(product.result.name)}
                             alt=""
                           />
                         </div>

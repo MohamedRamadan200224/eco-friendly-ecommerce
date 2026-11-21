@@ -105,7 +105,7 @@ const MyProducts = ({ user }) => {
                   <div className="flex gap-3">
                     <Link
                       className="px-2 py-2 rounded-md bg-cold-blue cursor-pointer"
-                      to={`/products/${product.id}`}
+                      to={`/products/${product.slug || product.id}`}
                     >
                       <TbViewportWide color="white" />
                     </Link>

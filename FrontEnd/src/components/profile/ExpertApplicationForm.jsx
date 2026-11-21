@@ -1,7 +1,15 @@
-// "Become an Expert" tab of the profile page, extracted from Profile.jsx.
+// "Become a Reviewer" tab of the profile page, extracted from Profile.jsx.
 //
-// The ten application questions, submitted as { question1 … question10 }.
-// No props: the form is self-contained and navigates home on success.
+// The thirteen application questions, submitted as
+// { question1 … question13 }. Questions 11–13 cover what the original
+// ten lack: the applicant's background, experience with eco-friendly
+// products, and why they qualify to verify products. No props: the form
+// is self-contained and navigates home on success.
+//
+// A "reviewer" is the existing 'expert' role (approved via this form);
+// the role name, model and API paths are unchanged — only the UI copy
+// says reviewer, because that is what the role does: verify products'
+// eco-friendliness (comment + report flag), not write buyer reviews.
 //
 // All requests go through the shared api client (cookie auth, one shared
 // error toast). No raw axios, no hardcoded backend URL, no Authorization
@@ -53,6 +61,18 @@ const QUESTIONS = [
     "question10",
     "Are you able to commit to making at least one vote every 10 minutes during your active hours? Please explain your strategy for doing so.",
   ],
+  [
+    "question11",
+    "What is your background (education, work, or training) relevant to assessing products?",
+  ],
+  [
+    "question12",
+    "What experience do you have with eco-friendly products or sustainability?",
+  ],
+  [
+    "question13",
+    "Why do you qualify to verify products as a reviewer?",
+  ],
 ];
 
 const ExpertApplicationForm = () => {
@@ -68,6 +88,9 @@ const ExpertApplicationForm = () => {
     question8: "",
     question9: "",
     question10: "",
+    question11: "",
+    question12: "",
+    question13: "",
   });
 
   const ApplyAsExpert = (e) => {
@@ -87,7 +110,7 @@ const ExpertApplicationForm = () => {
 
   return (
     <div className="mt-10">
-      <h2 className="text-xl font-bold text-green-600">Become an Expert</h2>
+      <h2 className="text-xl font-bold text-green-600">Become a Reviewer</h2>
       <div className="flex flex-col">
         {QUESTIONS.map(([key, label]) => (
           <React.Fragment key={key}>

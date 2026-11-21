@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { slugify } = require('../utils/slug');
 
 // Keyword lists for calculateEnvironmentalScore. They used to be
 // re-declared inline inside the method (and 'polyester' was misspelled
@@ -31,6 +32,16 @@ const productSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, 'Please enter the name of the product'],
+    },
+    // URL slug derived from the name (e.g. 'eco-friendly-electric-car').
+    // Unique + sparse: products created before slugs existed have no
+    // slug field at all, and a sparse index ignores those instead of
+    // treating their missing value as a duplicate. The slug is generated
+    // by the hooks below — never set it from a request body.
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     category: {
       type: String,
@@ -289,6 +300,57 @@ productSchema.methods.calculateEnvironmentalScore = function () {
   this.environmentalScore = score;
   this.environmentalImpactAssessed = true;
 };
+
+// Slug generation. Names are NOT unique, so a colliding slug gets a
+// -2 / -3 / ... suffix (first 'eco-car', then 'eco-car-2', ...).
+// Covers every write path:
+//   - pre('save'): createOne / createMyProduct (Model.create) and any
+//     doc.save() — including the lazy backfill in handlerFactory.getAll,
+//     which just saves slug-less products.
+//   - pre('findOneAndUpdate'): updateOne / updateMyProduct
+//     (findByIdAndUpdate / findOneAndUpdate never trigger save hooks),
+//     so a rename regenerates the slug there too.
+// A client-supplied slug is never honoured: the update hook deletes it
+// from the update, and the factory's FORBIDDEN_* lists strip it.
+const assignUniqueSlug = async (Model, baseSlug, excludeId) => {
+  let candidate = baseSlug;
+  let suffix = 2;
+  const query = { slug: candidate };
+  if (excludeId) query._id = { $ne: excludeId };
+  while (await Model.findOne(query).select('_id').lean()) {
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+    query.slug = candidate;
+  }
+  return candidate;
+};
+
+productSchema.pre('save', async function () {
+  if (!this.slug || this.isModified('name')) {
+    this.slug = await assignUniqueSlug(
+      this.constructor,
+      slugify(this.name),
+      this._id
+    );
+  }
+});
+
+productSchema.pre('findOneAndUpdate', async function () {
+  const update = this.getUpdate();
+  if (!update) return;
+  // Mongoose passes plain-object updates through as-is and $set updates
+  // under $set; handle both shapes.
+  const set = update.$set || update;
+  delete set.slug;
+  const newName = set.name;
+  if (typeof newName !== 'string' || !newName.trim()) return;
+  const filter = this.getFilter();
+  set.slug = await assignUniqueSlug(
+    this.model,
+    slugify(newName),
+    filter && filter._id
+  );
+});
 
 productSchema.pre(/^find/, function (next) {
   this.populate({

@@ -5,7 +5,7 @@ import { AiOutlineClose, AiOutlineMenu } from "react-icons/ai";
 import { RiShoppingCartLine } from "react-icons/ri";
 import { CgProfile } from "react-icons/cg";
 import CartModal from "./CartModal";
-import api from "../api/client";
+import api, { hideImgOnError } from "../api/client";
 import { getAuthUser, removeAuthUser } from "../helper/Storage";
 
 const Navbar = () => {
@@ -44,6 +44,7 @@ const Navbar = () => {
           alt="hero_img"
           className="hidden lg:block"
           style={{ width: "160px", height: "55px" }}
+          onError={hideImgOnError}
         />
         {/* <p className="hidden lg:block">GreenGray Market</p> */}
         <div className="flex items-center">

@@ -12,7 +12,10 @@ const voteSchema = new mongoose.Schema(
     },
     createdAt: {
       type: Date,
-      default: Date.now(),
+      // Date.now (the function) is evaluated per document. The old
+      // `default: Date.now()` was evaluated once, when this file was
+      // loaded, so every document got the server's start time.
+      default: Date.now,
     },
     product: {
       type: mongoose.Schema.ObjectId,

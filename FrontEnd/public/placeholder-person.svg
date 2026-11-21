@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="No profile photo">
+  <rect width="200" height="200" fill="#dcfce7"/>
+  <g fill="#15803d">
+    <circle cx="100" cy="70" r="36"/>
+    <path d="M100 118 c-42 0 -68 26 -68 52 l0 30 l136 0 l0 -30 c0 -26 -26 -52 -68 -52z"/>
+  </g>
+</svg>

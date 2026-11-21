@@ -21,7 +21,11 @@ import VoteSection from "./reviews/VoteSection";
 const Product = () => {
   const user = getAuthUser();
   const statusRef = useRef("fail");
-  const { id } = useParams();
+  // The route param is the product SLUG (/products/:slug); the backend
+  // falls back to an ObjectId lookup, so old id-based links still work.
+  // Nested review / vote / cart calls stay ObjectId-based: productId
+  // below is the loaded product's _id, never the slug.
+  const { slug } = useParams();
   const [activeTab, setActiveTab] = useState("description");
   // Bumped on every tab click so the sections load exactly when opened
   // (the old code called showRev / showCom from the tab buttons).
@@ -46,7 +50,7 @@ const Product = () => {
   useEffect(() => {
     setProduct({ ...product, loading: true });
     api
-      .get(`/api/v1/products/${id}`)
+      .get(`/api/v1/products/${slug}`)
       .then((resp) => {
         statusRef.current = resp.data.status;
         setProduct({
@@ -69,7 +73,12 @@ const Product = () => {
         });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [slug]);
+
+  // The loaded product's ObjectId — the nested review / vote / cart
+  // endpoints take an ObjectId, not the slug. Empty until the product
+  // loads, so the sections guard on it before fetching.
+  const productId = product.result && (product.result._id || product.result.id);
 
   const addcart = (e) => {
     e.preventDefault();
@@ -82,7 +91,7 @@ const Product = () => {
     });
 
     api
-      .post(`/api/v1/addToCart/myCart/${id}`, {
+      .post(`/api/v1/addToCart/myCart/${productId}`, {
         quantity: addCart.quantity,
       })
       .then((resp) => {
@@ -316,7 +325,7 @@ const Product = () => {
                       setComSignal((signal) => signal + 1);
                     }}
                   >
-                    Comments
+                    Reviewer Verifications
                     <span className="block px-2 py-px ml-2 text-xs font-bold text-gray-100 bg-gray-500 rounded-full"></span>
                   </button>
                 </nav>
@@ -324,7 +333,7 @@ const Product = () => {
 
               {activeTab === "reviews" && (
                 <ReviewSection
-                  productId={id}
+                  productId={productId}
                   user={user}
                   loadSignal={revSignal}
                 />
@@ -332,7 +341,7 @@ const Product = () => {
 
               {activeTab === "comments" && (
                 <VoteSection
-                  productId={id}
+                  productId={productId}
                   user={user}
                   loadSignal={comSignal}
                 />

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
@@ -14,6 +15,8 @@ const Product = require('../models/productModel');
 //   would store it in plain text).
 // - role / isCertified / rewardPoints: privilege / trust state, server-only.
 // - owner: ownership is decided by the server (req.user.id).
+// - slug: derived from the product name by the model hooks; a client
+//   must never set it directly (see models/productModel.js).
 // - ratingsAverage / ratingsQuantity / soldNum / environmentalScore /
 //   reportsNumber / noReportsNumber / harmfultoenv /
 //   environmentalImpactAssessed: computed / aggregated server-side.
@@ -24,6 +27,7 @@ const FORBIDDEN_UPDATE_FIELDS = [
   'isCertified',
   'rewardPoints',
   'owner',
+  'slug',
   'ratingsAverage',
   'ratingsQuantity',
   'soldNum',
@@ -81,6 +85,25 @@ const applyExpiredSaleInMemory = (doc) => {
   }
   return doc;
 };
+
+// Shared by productController.getProduct: the in-memory sale-expiry
+// adjustment (a GET must not write the DB) and the slug-or-id lookup.
+exports.applyExpiredSaleInMemory = applyExpiredSaleInMemory;
+
+// Find a product by its URL slug first, falling back to an ObjectId
+// lookup so old id-based links and bookmarks keep working. A slug that
+// is not a valid ObjectId never reaches findById (that would throw a
+// CastError).
+const findProductBySlugOrId = async (param) => {
+  if (!param) return null;
+  let product = await Product.findOne({ slug: param }).select('_id');
+  if (!product && mongoose.Types.ObjectId.isValid(param)) {
+    product = await Product.findById(param).select('_id');
+  }
+  return product;
+};
+
+exports.findProductBySlugOrId = findProductBySlugOrId;
 
 exports.getMyProducts = (Model, modelType) =>
   catchAsync(async (req, res, next) => {
@@ -460,6 +483,18 @@ exports.getAll = (Model, modelType) =>
     const docs = await features.query;
 
     if (modelType === 'product') {
+      // LAZY SLUG BACKFILL: products created before slugs existed (or
+      // seeded without one) get a slug the first time the list is
+      // fetched, so the live catalogue heals itself after deploy — no
+      // manual step, no one-time endpoint. The pre('save') hook
+      // generates a unique slug. validateBeforeSave is off so a legacy
+      // document that no longer passes today's validators cannot break
+      // the whole list endpoint; the save only writes the slug.
+      // Runs BEFORE applyExpiredSaleInMemory below, so the save never
+      // persists that in-memory sale-expiry adjustment.
+      for (const doc of docs) {
+        if (!doc.slug) await doc.save({ validateBeforeSave: false });
+      }
       // The old code used docs.forEach(async ...) — the async callbacks
       // were never awaited, so the response could go out before the
       // (unwanted) saves finished. Sale expiry is now computed in memory
@@ -481,9 +516,16 @@ exports.getAll = (Model, modelType) =>
 //checks if the model (reviews,votes) are done before
 exports.checkIfDoneBefore = (rateModel) =>
   catchAsync(async (req, res, next) => {
-    const productIdFound = await Product.findById(req.body.product);
+    // User and product are SERVER-derived, not read from the request
+    // body: the old code checked req.body.product / req.body.user, so a
+    // caller could review or vote as someone else, or on a different
+    // product than the URL names. The nested routes always carry the
+    // product in req.params.productId.
+    const product = await findProductBySlugOrId(
+      req.params.productId || req.body.product
+    );
 
-    if (!productIdFound) {
+    if (!product) {
       return next(
         new AppError(
           'The ID of the product you are reviewing or voting was not found in DB!',
@@ -493,8 +535,8 @@ exports.checkIfDoneBefore = (rateModel) =>
     }
 
     const reviewedBefore = await rateModel.findOne({
-      product: req.body.product,
-      user: req.body.user,
+      product: product._id,
+      user: req.user._id,
     });
 
     if (reviewedBefore) {

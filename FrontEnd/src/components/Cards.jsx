@@ -1,3 +1,4 @@
+import { handleImgError } from "../api/client";
 
 const Cards = ({ imgSrc }) => {
   return (
@@ -13,6 +14,7 @@ const Cards = ({ imgSrc }) => {
           src={imgSrc}
           alt="person_1"
           className="rounded-full w-[40px] h-[40px]"
+          onError={handleImgError("Person", "person")}
         />
         <div className="flex flex-col">
           <h1 className="text-base font-light text-cold-blue">

@@ -2,7 +2,7 @@
 // no raw axios, no hardcoded localhost URL, no Authorization header
 // (cookie auth — the httpOnly cookie is sent automatically), and
 // request errors are toasted once by the client's interceptor.
-import api, { isDemoSite } from "../api/client";
+import api, { isDemoSite, hideImgOnError } from "../api/client";
 import { compressImage } from "../helper/compressImage";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -97,7 +97,7 @@ const UpdateProduct = () => {
   return (
     <section className="max-container padding-container mb-[200px] mt-[30px] grid md:grid-cols-2">
       <div>
-        <img src="/img_loginsignup.jpg" alt="hero_img" />
+        <img src="/img_loginsignup.jpg" alt="hero_img" onError={hideImgOnError} />
       </div>
       <div className="lg:w-[80%]">
         <div className="space-y-3">

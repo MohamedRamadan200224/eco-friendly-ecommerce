@@ -1,3 +1,4 @@
+import { hideImgOnError } from "../api/client";
 
 const Vision = () => {
   return (
@@ -34,7 +35,7 @@ const Vision = () => {
         </div>
       </div>
       <div className="md:w-[75%] mx-auto hidden md:block">
-        <img src="/img_vision.svg" alt="hero.jpg" />
+        <img src="/img_vision.svg" alt="hero.jpg" onError={hideImgOnError} />
       </div>
     </section>
   );

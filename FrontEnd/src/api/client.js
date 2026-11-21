@@ -42,23 +42,21 @@ api.interceptors.response.use(
   }
 );
 
-// Demo placeholder image for products without a usable cover.
-// Image upload is not available in the demo (uploads land on the
-// serverless function's ephemeral disk and never persist), so products
-// created in the demo have no cover, and the seeded covers point at files
-// that were never committed. Show a placeholder instead of a broken image.
-export const placeholderImage = (label) =>
-  `https://placehold.co/600x400/15803d/ffffff?text=${encodeURIComponent(
-    label || "No image"
-  )}`;
+// Local placeholder images (FrontEnd/public/ — served from the site
+// root, no external service, so they work offline and never 404 when a
+// third-party placeholder host is down). Brand greens match the old
+// placehold.co fallback (#15803d / #16a34a).
+export const placeholderProduct = "/placeholder-product.svg";
+export const placeholderPerson = "/placeholder-person.svg";
 
 // Image URLs served by the backend's static /img route. Build them from the
 // API base instead of hardcoding a localhost string at each call site.
 // A cover that is already a full URL (e.g. a placeholder from the seed
-// data) is used as-is; a missing cover falls back to the placeholder.
-// A leading slash on the filename is stripped so the URL has no "//".
+// data) is used as-is; a missing cover falls back to the local product
+// placeholder. A leading slash on the filename is stripped so the URL
+// has no "//".
 export const imageUrl = (category, imageCover) => {
-  if (!imageCover) return placeholderImage(category || "Product");
+  if (!imageCover) return placeholderProduct;
   if (/^https?:\/\//.test(imageCover)) return imageCover;
   return `${apiBaseUrl}/img/${category}/${String(imageCover).replace(
     /^\//,
@@ -67,12 +65,25 @@ export const imageUrl = (category, imageCover) => {
 };
 
 // <img onError> fallback: if the backend file is missing (the seeded covers
-// point at files that were never committed), swap to the placeholder.
-// The guard stops an infinite loop if the placeholder itself fails.
-export const handleImgError = (label) => (e) => {
+// point at files that were never committed), swap to a local placeholder.
+// kind "person" is for avatars, anything else is the product placeholder.
+// The guard is a dataset flag, not a src comparison: the local fallback
+// is a relative URL, so el.src is absolute and would never equal it —
+// the old comparison only worked because the fallback was absolute.
+export const handleImgError = (label, kind = "product") => (e) => {
   const el = e.currentTarget;
-  const fallback = placeholderImage(label);
-  if (el.src !== fallback) el.src = fallback;
+  if (el.dataset.imgFallback) return;
+  el.dataset.imgFallback = "1";
+  el.src = kind === "person" ? placeholderPerson : placeholderProduct;
+};
+
+// <img onError> fallback for static / bundled images (logo, hero and
+// section SVGs, login art, testimonial / team photos): there is no
+// sensible placeholder for a logo, so hide the broken element instead
+// of showing a broken-image icon.
+export const hideImgOnError = (e) => {
+  const el = e.currentTarget;
+  el.style.display = "none";
 };
 
 // Demo detection: the public demo runs on a *.vercel.app domain. Image
@@ -84,6 +95,14 @@ export const isDemoSite = () =>
   typeof window !== "undefined" &&
   window.location.hostname.includes("vercel.app");
 
-export const userImageUrl = (photo) => `${apiBaseUrl}/img/users/${photo}`;
+export const userImageUrl = (photo) => {
+  // No null handling used to produce .../img/users/null (a user photo
+  // defaults to null). A missing, empty or literal-"null" photo falls
+  // back to the local person placeholder instead.
+  if (!photo || photo === "null" || photo === "undefined")
+    return placeholderPerson;
+  if (/^https?:\/\//.test(photo)) return photo;
+  return `${apiBaseUrl}/img/users/${photo}`;
+};
 
 export default api;

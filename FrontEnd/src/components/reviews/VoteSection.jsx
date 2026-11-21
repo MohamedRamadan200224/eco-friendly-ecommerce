@@ -1,13 +1,17 @@
-// Comments / votes tab of the product page, extracted from Product.jsx.
+// Reviewer verifications tab of the product page, extracted from
+// Product.jsx.
 //
-// Owns everything about product votes (the "comments" tab): loading the
-// list, submitting a vote/comment, updating / deleting one, and the
-// report flag. Props are minimal and explicit:
-//   productId  — the product being voted on (route param from Product.jsx)
+// Owns everything about product verifications (votes): loading the list,
+// submitting a verification, updating / deleting one, and the report
+// flag. A verification is a reviewer's (role 'expert') comment + report
+// flag on a product's eco-friendliness — it feeds the product's
+// reportsNumber / noReportsNumber and harmfultoenv. Props are minimal
+// and explicit:
+//   productId  — the product being verified (route param from Product.jsx)
 //   user       — the logged-in user from getAuthUser(), or null
-//   loadSignal — a number Product.jsx bumps every time the Comments tab is
-//                clicked; this section loads on that signal, exactly like
-//                the old showCom-on-tab-click behaviour.
+//   loadSignal — a number Product.jsx bumps every time the Verifications
+//                tab is clicked; this section loads on that signal,
+//                exactly like the old showCom-on-tab-click behaviour.
 //
 // All requests go through the shared api client (cookie auth, one shared
 // error toast). No raw axios, no hardcoded backend URL, no Authorization
@@ -16,14 +20,31 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import EcoLoader from "../EcoLoader";
-import api, { userImageUrl } from "../../api/client";
+import api, { userImageUrl, handleImgError } from "../../api/client";
 import Pagination from "../Pagination";
 
 const VoteSection = ({ productId, user, loadSignal }) => {
   const statusRef = useRef("fail");
   const [currentComPage, setCurrentComPage] = useState(1);
   const [reviewsPerPage] = useState(10);
-  const [editCom, setEditCom] = useState(false);
+  // Per-verification edit state (not one global boolean): opening the
+  // edit box on one verification must not open it on every verification
+  // at once. The edit form's own state is prefilled from the
+  // verification being edited — the old code sent the *create-form*
+  // state on update, so saving an edit sent empty text unless the user
+  // re-typed it in the create box.
+  const [editingVoteId, setEditingVoteId] = useState(null);
+  const [editForm, setEditForm] = useState({ comment: "", report: false });
+
+  const openEdit = (rev) => {
+    setEditingVoteId(rev._id);
+    setEditForm({ comment: rev.comment, report: rev.report });
+  };
+
+  const closeEdit = () => {
+    setEditingVoteId(null);
+    setEditForm({ comment: "", report: false });
+  };
 
   const [comments, setComments] = useState({
     results: [],
@@ -40,6 +61,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
   });
 
   const showCom = () => {
+    if (!productId) return;
     setComments({ ...comments, loading: true });
     api
       .get(`/api/v1/products/${productId}/vote`)
@@ -79,22 +101,31 @@ const VoteSection = ({ productId, user, loadSignal }) => {
   const HandleComment = (e) => {
     e.preventDefault();
 
+    // Client-side validation: the backend requires a non-empty comment.
+    if (!comment.comment.trim()) {
+      toast.error("Please write your verification first.");
+      return;
+    }
+
     setComment({ ...comment, loading: true });
+    // User and product are server-derived now (the backend takes them
+    // from the login + the URL); sending them in the body was the trust
+    // bug fixed in createReview / createVote.
     api
       .post(`/api/v1/products/${productId}/vote`, {
         comment: comment.comment,
         report: comment.report,
-        user: user._id,
-        product: productId,
       })
       .then((resp) => {
         statusRef.current = resp.data.status;
         setComment({
-          ...comment,
+          comment: "",
+          report: false,
           status: resp.data.status,
           loading: false,
           reload: comment.reload + 1,
         });
+        toast.success("Verification posted successfully.");
         showCom();
       })
       .catch(() => {
@@ -115,10 +146,17 @@ const VoteSection = ({ productId, user, loadSignal }) => {
 
   const updateComment = (e, revId) => {
     e.preventDefault();
+    // Validate and send the *edit* form's own state (see openEdit): the
+    // old code sent the create-form state, which is empty on a fresh page
+    // load, so the PATCH failed the schema's non-empty comment rule.
+    if (!editForm.comment.trim()) {
+      toast.error("Please write your verification first.");
+      return;
+    }
     api
       .patch(voteEndpoint(revId), {
-        comment: comment.comment,
-        report: comment.report,
+        comment: editForm.comment,
+        report: editForm.report,
       })
       .then((resp) => {
         statusRef.current = resp.data.status;
@@ -128,7 +166,10 @@ const VoteSection = ({ productId, user, loadSignal }) => {
           loading: false,
           reload: comments.reload + 1,
         });
-        setEditCom(false);
+        closeEdit();
+        toast.success("Verification updated successfully.");
+        // Refresh the list: without this the updated verification kept
+        // showing its old text until the tab was clicked again.
         showCom();
       })
       .catch(() => {
@@ -153,6 +194,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
           loading: false,
           reload: comments.reload + 1,
         });
+        toast.success("Verification deleted successfully.");
         showCom();
       })
       .catch(() => {
@@ -186,7 +228,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
   return (
     <>
       {(comments.loading === true || comment.loading === true) && (
-        <EcoLoader label="Watering the comments…" />
+        <EcoLoader label="Watering the verifications…" />
       )}
 
       {comments.loading === false && (
@@ -205,6 +247,10 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                       <img
                         className="flex-shrink-0 block w-10 h-10 max-w-full align-middle rounded-full"
                         src={userImageUrl(rev.user && rev.user.photo)}
+                        onError={handleImgError(
+                          rev.user && rev.user.name,
+                          "person"
+                        )}
                         alt=""
                       />
                       <div className="ml-6">
@@ -223,7 +269,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                               (user && user.role === "admin")) && (
                               <>
                                 <button
-                                  onClick={() => setEditCom(true)}
+                                  onClick={() => openEdit(rev)}
                                   className="text-md font-bold cursor-pointer hover:text-green-600 text-green-500 ml-4"
                                 >
                                   Update
@@ -237,10 +283,10 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                               </>
                             )}
                           </div>
-                          {editCom === true ? (
+                          {editingVoteId === rev._id ? (
                             <div className=" w-full my-2 mx-2 items-center">
                               <button
-                                onClick={() => setEditCom(false)}
+                                onClick={closeEdit}
                                 className="float-right text-lg font-bold cursor-pointer text-red-400 hover:text-red-500"
                               >
                                 X
@@ -249,24 +295,25 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                               <div>
                                 <textarea
                                   name="comment"
-                                  placeholder="Write your Review here"
+                                  placeholder="Write your verification here"
                                   cols="30"
                                   rows="6"
+                                  value={editForm.comment}
                                   onChange={(e) =>
-                                    setComment({
-                                      ...comment,
+                                    setEditForm({
+                                      ...editForm,
                                       comment: e.target.value,
                                     })
                                   }
                                   className="w-full h-40 max-w-full min-w-full p-5 overflow-auto text-sm font-normal text-gray-600 normal-case whitespace-pre-wrap bg-white border rounded-md outline-none opacity-100 focus:text-gray-600 focus:opacity-100 focus:ring"
                                 ></textarea>
-                                {rev.report === true ? (
+                                {editForm.report === true ? (
                                   <button
                                     type="submit"
                                     value="Post Comment"
                                     onClick={() =>
-                                      setComment({
-                                        ...comment,
+                                      setEditForm({
+                                        ...editForm,
                                         report: false,
                                       })
                                     }
@@ -279,8 +326,8 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                                     type="submit"
                                     value="Post Comment"
                                     onClick={() =>
-                                      setComment({
-                                        ...comment,
+                                      setEditForm({
+                                        ...editForm,
                                         report: true,
                                       })
                                     }
@@ -294,7 +341,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                               <div className="float-right">
                                 <input
                                   type="submit"
-                                  value="Post Review"
+                                  value="Update Verification"
                                   onClick={(e) => {
                                     updateComment(e, rev._id);
                                   }}
@@ -320,7 +367,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
               })
             ) : (
               <div className="inline-flex items-center justify-center px-4 py-3 m-2 hover:border-green-300 text-base font-bold text-center text-white transition-all duration-200 ease-in-out border-2 border-transparent rounded-md bg-cold-blue bg-none focus:shadow hover:bg-gray-800">
-                No Comments Added Yet
+                No Verifications Added Yet
               </div>
             )}
           </ul>
@@ -329,13 +376,16 @@ const VoteSection = ({ productId, user, loadSignal }) => {
             <div className="">
               <div className="max-w-screen-sm px-4 mx-auto">
                 <h1 className="mt-6 text-xl font-bold sm:mb-6 sm:text-3xl text-cold-blue">
-                  Write your Comments
+                  Write your Verification
                 </h1>
 
                 <div className="flex p-4 -ml-20 text-left text-gray-700">
+                  {/* The logged-in reviewer's photo, not a hardcoded
+                      ui-avatars.com "A H" placeholder. */}
                   <img
                     className="w-12 h-12 mr-5 rounded-full"
-                    src="https://ui-avatars.com/api/?name=A+H"
+                    src={userImageUrl(user && user.photo)}
+                    onError={handleImgError(user && user.name, "person")}
                     alt=""
                   />
                   <div className="w-full space-y-3 text-gray-700">
@@ -343,9 +393,10 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                       <textarea
                         name="comment"
                         id=""
-                        placeholder="Write your Comment here"
+                        placeholder="Write your verification here"
                         cols="30"
                         rows="6"
+                        value={comment.comment}
                         onChange={(e) =>
                           setComment({
                             ...comment,
@@ -368,7 +419,7 @@ const VoteSection = ({ productId, user, loadSignal }) => {
                       </button>
                       <input
                         type="submit"
-                        value="Post Comment"
+                        value="Post Verification"
                         onClick={HandleComment}
                         className="relative inline-flex items-center justify-center w-auto h-10 max-w-full px-4 overflow-hidden text-sm font-medium text-center text-white normal-case whitespace-pre bg-green-600 rounded-md outline-none opacity-100 cursor-pointer focus:ring"
                       />

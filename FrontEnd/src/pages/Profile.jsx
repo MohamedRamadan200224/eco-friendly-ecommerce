@@ -68,7 +68,7 @@ const Profile = () => {
                 className="duration-300 ease-in-out hover:text-green-600 focus:text-green-600"
                 onClick={() => handleButtonClick("become_an_expert")}
               >
-                Expert Application
+                Reviewer Application
               </button>
             </li>
           )}
@@ -102,7 +102,7 @@ const Profile = () => {
                     handleButtonClick("experts_list");
                   }}
                 >
-                  Experts List
+                  Reviewers List
                 </button>
               </li>
               <li>

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../models/productModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -33,14 +34,38 @@ exports.deleteMyProduct = handlerFactory.deleteMyProduct(Product);
 
 exports.getAllProducts = handlerFactory.getAll(Product, 'product');
 
-exports.getProduct = handlerFactory.getOne(Product, 'product', [
-  {
-    path: 'reviews',
-  },
-  {
-    path: 'votes',
-  },
-]);
+// GET /api/v1/products/:slug — slug-first lookup, falling back to an
+// ObjectId lookup so old id-based links and bookmarks keep working.
+// (The generic factory getOne only does findById, so this route has its
+// own handler.) The nested review / vote / cart calls stay ObjectId-based
+// internally — only the URL changed.
+exports.getProduct = catchAsync(async (req, res, next) => {
+  const param = req.params.id;
+  let doc = await Product.findOne({ slug: param }).populate([
+    { path: 'reviews' },
+    { path: 'votes' },
+  ]);
+  if (!doc && mongoose.Types.ObjectId.isValid(param)) {
+    doc = await Product.findById(param).populate([
+      { path: 'reviews' },
+      { path: 'votes' },
+    ]);
+  }
+
+  if (!doc) {
+    return next(new AppError('No document found with that ID', 404));
+  }
+
+  // Expired sale, computed at read time only (no DB write on a GET).
+  handlerFactory.applyExpiredSaleInMemory(doc);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});
 exports.createProduct = handlerFactory.createOne(Product, 'product');
 
 exports.updateProduct = handlerFactory.updateOne(Product);

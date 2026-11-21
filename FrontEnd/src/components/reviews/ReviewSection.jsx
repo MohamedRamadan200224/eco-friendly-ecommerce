@@ -15,7 +15,7 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import EcoLoader from "../EcoLoader";
-import api, { userImageUrl } from "../../api/client";
+import api, { userImageUrl, handleImgError } from "../../api/client";
 import Pagination from "../Pagination";
 
 const totalStars = 5;
@@ -63,6 +63,7 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
   });
 
   const showRev = () => {
+    if (!productId) return;
     setReviews({ ...reviews, loading: true });
     api
       .get(`/api/v1/products/${productId}/review`)
@@ -96,8 +97,45 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
   useEffect(() => {
     if (loadSignal === 0) return;
     showRev();
+    checkPurchase();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadSignal]);
+
+  // Buyer gate: only a buyer with a PAID order containing this product
+  // may post a review. Reuses the existing GET /api/v1/myOrders (no new
+  // endpoint): the response shape is { orders: [...] } with populated
+  // products. This is only the UI gate — the backend enforces the same
+  // check in createReview, so a forged request still gets a 403.
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [purchaseChecked, setPurchaseChecked] = useState(false);
+
+  const checkPurchase = () => {
+    if (!user || user.role !== "user" || !productId) {
+      setPurchaseChecked(true);
+      return;
+    }
+    api
+      .get(`/api/v1/myOrders`)
+      .then((resp) => {
+        const orders = resp.data.orders || [];
+        const bought = orders.some(
+          (order) =>
+            order.paymentStatus === "paid" &&
+            (order.products || []).some((item) => {
+              const p = item.product;
+              return String((p && p._id) || p) === String(productId);
+            })
+        );
+        setHasPurchased(bought);
+        setPurchaseChecked(true);
+      })
+      .catch(() => {
+        // Error already toasted once by the api client interceptor.
+        // Treat as "not verified as a buyer" — the backend enforces
+        // the purchase check anyway.
+        setPurchaseChecked(true);
+      });
+  };
 
   const HandleSubmit = (e) => {
     e.preventDefault();
@@ -116,12 +154,13 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
     }
 
     setReview({ ...review, loading: true });
+    // User and product are server-derived now (the backend takes them
+    // from the login + the URL); sending them in the body was the trust
+    // bug fixed in createReview.
     api
       .post(`/api/v1/products/${productId}/review`, {
         review: review.review,
         rating: review.rating,
-        user: user._id,
-        product: productId,
       })
       .then((resp) => {
         statusRef.current = resp.data.status;
@@ -262,6 +301,10 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                       <img
                         className="flex-shrink-0 block w-10 h-10 max-w-full align-middle rounded-full"
                         src={userImageUrl(rev.user && rev.user.photo)}
+                        onError={handleImgError(
+                          rev.user && rev.user.name,
+                          "person"
+                        )}
                         alt=""
                       />
                       <div className="ml-6">
@@ -401,7 +444,17 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
             )}
           </ul>
 
-          {user && user.role === "user" && !hasReviewed && (
+          {user &&
+            user.role === "user" &&
+            !hasReviewed &&
+            purchaseChecked &&
+            !hasPurchased && (
+              <div className="inline-flex items-center justify-center px-4 py-3 m-2 text-base font-bold text-center text-white transition-all duration-200 ease-in-out border-2 border-transparent rounded-md bg-cold-blue bg-none focus:shadow hover:bg-gray-800">
+                Only buyers who purchased this product can review it.
+              </div>
+            )}
+
+          {user && user.role === "user" && !hasReviewed && hasPurchased && (
             <div className="">
               <div className="max-w-screen-sm px-4 mx-auto">
                 <h1 className="mt-6 text-xl font-bold sm:mb-6 sm:text-3xl text-cold-blue">
@@ -436,9 +489,12 @@ const ReviewSection = ({ productId, user, loadSignal }) => {
                 </div>
 
                 <div className="flex p-4 -ml-20 text-left text-gray-700">
+                  {/* The logged-in user's photo, not a hardcoded
+                      ui-avatars.com "A H" placeholder. */}
                   <img
                     className="w-12 h-12 mr-5 rounded-full"
-                    src="https://ui-avatars.com/api/?name=A+H"
+                    src={userImageUrl(user && user.photo)}
+                    onError={handleImgError(user && user.name, "person")}
                     alt=""
                   />
                   <div className="w-full space-y-3 text-gray-700">

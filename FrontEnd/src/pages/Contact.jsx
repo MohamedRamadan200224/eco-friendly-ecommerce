@@ -1,4 +1,5 @@
 import Header from "../components/Header";
+import { hideImgOnError } from "../api/client";
 import Testimonials from "../components/Testimonials";
 
 const Contact = () => {
@@ -9,7 +10,7 @@ const Contact = () => {
       <section className="max-container padding-container mb-[200px] mt-[30px]">
         <div className="grid lg:grid-cols-2">
           <div className="w-[70%] mx-auto">
-            <img src="/img_contact.svg" alt="contact" />
+            <img src="/img_contact.svg" alt="contact" onError={hideImgOnError} />
           </div>
           <div className="flex flex-col mt-8 md:mt-0">
             <form>

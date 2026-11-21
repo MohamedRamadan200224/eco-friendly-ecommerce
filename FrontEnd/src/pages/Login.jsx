@@ -11,7 +11,7 @@ import Header from "../components/Header";
 import { useNavigate } from "react-router";
 import { setAuthUser } from "../helper/Storage";
 import { toast } from "react-hot-toast";
-import api from "../api/client";
+import api, { hideImgOnError } from "../api/client";
 const Login = () => {
   const navigate = useNavigate();
   const [forgot, setForgot] = useState(false);
@@ -94,7 +94,7 @@ const Login = () => {
 
       <section className="max-container padding-container mb-[200px] mt-[30px] grid md:grid-cols-2">
         <div>
-          <img src="/img_loginsignup.jpg" alt="hero_img" />
+          <img src="/img_loginsignup.jpg" alt="hero_img" onError={hideImgOnError} />
         </div>
         <div className="lg:w-[80%]">
           <div className="space-y-3">
