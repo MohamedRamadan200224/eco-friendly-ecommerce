@@ -21,7 +21,7 @@ import { Navigation, Pagination, FreeMode, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import api, { imageUrl, handleImgError } from "../api/client";
+import api, { imageUrl, handleImgError, hideImgOnError } from "../api/client";
 import EcoLoader from "../components/EcoLoader";
 
 const Home = () => {
@@ -88,7 +88,7 @@ const Home = () => {
           </button>
         </div>
         <div className="md:w-[75%] lg:w-full mx-auto hidden md:block">
-          <img src="/img_hero.svg" alt="hero.jpg" />
+          <img src="/img_hero.svg" alt="hero.jpg" onError={hideImgOnError} />
         </div>
       </section>
 
@@ -110,7 +110,7 @@ const Home = () => {
             products.results.map((product) => (
               <a
                 key={product.id}
-                href={`/products/${product.id}`}
+                href={`/products/${product.slug || product.id}`}
                 className="flex flex-col border-2 rounded-md border-cold-blue"
               >
                 <img

@@ -136,6 +136,32 @@ const ExpertsModal = ({ appId, onClose }) => {
               value={application.result.question10}
               className="h-[80px] rounded-md border border-cold-blue px-[20px] py-[12px] w-full"
             />
+
+            <label>
+              What is your background (education, work, or training) relevant
+              to assessing products?
+            </label>
+            <textarea
+              value={application.result.question11}
+              className="h-[80px] rounded-md border border-cold-blue px-[20px] py-[12px] w-full"
+            />
+
+            <label>
+              What experience do you have with eco-friendly products or
+              sustainability?
+            </label>
+            <textarea
+              value={application.result.question12}
+              className="h-[80px] rounded-md border border-cold-blue px-[20px] py-[12px] w-full"
+            />
+
+            <label>
+              Why do you qualify to verify products as a reviewer?
+            </label>
+            <textarea
+              value={application.result.question13}
+              className="h-[80px] rounded-md border border-cold-blue px-[20px] py-[12px] w-full"
+            />
           </div>
         </div>
       </div>

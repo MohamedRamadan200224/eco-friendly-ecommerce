@@ -2,7 +2,24 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const User = require('./../models/userModel');
 const ExpertApply = require('./../models/expertApplyModel');
-const factory = require('./handlerFactory');
+const { filterObj } = require('./../utils/filterObj');
+
+// Only the thirteen application answers may come from the client.
+const APPLICATION_QUESTIONS = [
+  'question1',
+  'question2',
+  'question3',
+  'question4',
+  'question5',
+  'question6',
+  'question7',
+  'question8',
+  'question9',
+  'question10',
+  'question11',
+  'question12',
+  'question13',
+];
 
 exports.getAllApplications = catchAsync(async (req, res, next) => {
   const applications = await ExpertApply.find();
@@ -56,8 +73,15 @@ exports.apply = catchAsync(async (req, res, next) => {
   if (existingApplication) {
     return next(new AppError('You have applied before!', 400));
   }
-  req.body.user = req.user.id;
-  await ExpertApply.create(req.body);
+  // Allowlist the answers and FORCE 'pending': the old code passed the
+  // whole body to create(), so a client-supplied applicationStatus
+  // (e.g. 'approved') was stored as-is — a self-approved reviewer.
+  const applicationData = {
+    ...filterObj(req.body, ...APPLICATION_QUESTIONS),
+    user: req.user.id,
+    applicationStatus: 'pending',
+  };
+  await ExpertApply.create(applicationData);
   res.status(200).json({
     status: 'success',
     message: 'Applied successfully',
@@ -66,9 +90,12 @@ exports.apply = catchAsync(async (req, res, next) => {
 
 //update application status
 exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
+  // Allowlist: only the status may change here. The old code passed the
+  // whole body to findByIdAndUpdate, so an admin call (or a forged one)
+  // could overwrite the applicant's answers or user id along with it.
   const application = await ExpertApply.findByIdAndUpdate(
     req.params.id,
-    req.body,
+    filterObj(req.body, 'applicationStatus'),
     {
       new: true,
       runValidators: true,
@@ -80,7 +107,8 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
   }
 
   // If the application status is 'approved', update the user's role to 'expert'
-  if (req.body.applicationStatus === 'approved') {
+  // (read from the stored document, not the request body).
+  if (application.applicationStatus === 'approved') {
     await User.findByIdAndUpdate(application.user.id, {
       role: 'expert',
       lastVoted: new Date(),

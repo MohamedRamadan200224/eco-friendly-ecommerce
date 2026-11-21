@@ -6,6 +6,7 @@ import { IoMdCloseCircleOutline } from "react-icons/io";
 // axios calls use withCredentials. No token is read from storage here.
 import PropTypes from "prop-types";
 import EcoLoader from "./EcoLoader";
+import { imageUrl, handleImgError } from "../api/client";
 
 // API base URL from the environment (defaults to the local backend).
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -287,7 +288,13 @@ const CartModal = ({ onClose }) => {
                                   <div className="shrink-0">
                                     <img
                                       className="object-cover w-24 h-24 max-w-full rounded-lg"
-                                      src={`${API_URL}/img/${item.product.category}/${item.product.imageCover}`}
+                                      src={imageUrl(
+                                        item.product.category,
+                                        item.product.imageCover
+                                      )}
+                                      onError={handleImgError(
+                                        item.product.name
+                                      )}
                                       alt="Product"
                                     />
                                   </div>

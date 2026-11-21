@@ -10,7 +10,11 @@
 // the httpOnly cookie now, and getAuthToken() returns undefined anyway.
 import { useState } from "react";
 import toast from "react-hot-toast";
-import api, { isDemoSite } from "../../api/client";
+import api, {
+  isDemoSite,
+  userImageUrl,
+  handleImgError,
+} from "../../api/client";
 import { setAuthUser } from "../../helper/Storage";
 
 const EditProfile = ({ user }) => {
@@ -188,6 +192,15 @@ const EditProfile = ({ user }) => {
         {/* No role field: there is intentionally no way to change roles
             from the UI (roles are admin-only server-side), and the old
             <select> was empty and dead. */}
+
+        {/* Current photo (local person placeholder when there is none)
+            so the user can see what is stored before replacing it. */}
+        <img
+          src={userImageUrl(user?.photo)}
+          onError={handleImgError(user?.name, "person")}
+          alt={user?.name || "Profile photo"}
+          className="w-24 h-24 rounded-full object-cover"
+        />
 
         <label className="mx-2 my-2">Photo</label>
         <input

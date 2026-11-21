@@ -40,7 +40,7 @@ const ExpertsList = () => {
     api
       .delete(`/api/v1/expertApply/${applicationId}`)
       .then(() => {
-        toast.success("Expert Application is Successfully Deleted");
+        toast.success("Reviewer Application is Successfully Deleted");
         applications.reload();
       })
       .catch(() => {
@@ -57,7 +57,7 @@ const ExpertsList = () => {
       })
       .then(() => {
         toast.success(
-          `User's Expert Application Is Successfully ${decision}`
+          `User's Reviewer Application Is Successfully ${decision}`
         );
         applications.reload();
       })
@@ -97,7 +97,7 @@ const ExpertsList = () => {
             <div className="flex items-center justify-between pb-6">
               <div>
                 <h2 className="text-xl font-semibold text-green-600">
-                  Experts List
+                  Reviewers List
                 </h2>
               </div>
               <div className="flex items-center justify-between">

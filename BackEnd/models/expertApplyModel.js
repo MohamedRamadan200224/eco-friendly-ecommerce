@@ -46,6 +46,21 @@ const expertApplySchema = new mongoose.Schema({
     type: String,
     required: [true, 'An answer to the question is needed!'],
   },
+  // Background / qualification questions (added with the reviewer vs
+  // commenter model): the original ten are all process questions, with
+  // nothing about who the applicant is or why they qualify.
+  question11: {
+    type: String,
+    required: [true, 'An answer to the question is needed!'],
+  },
+  question12: {
+    type: String,
+    required: [true, 'An answer to the question is needed!'],
+  },
+  question13: {
+    type: String,
+    required: [true, 'An answer to the question is needed!'],
+  },
   applicationStatus: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

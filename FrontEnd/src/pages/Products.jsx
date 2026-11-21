@@ -165,7 +165,7 @@ const Products = () => {
                 key={duct._id}
                 className="relative flex flex-col border-2 rounded-md border-cold-blue  hover:border-green-500 transform duration-500 hover:-translate-y-2"
               >
-                <a href={`/products/${duct.id}`}>
+                <a href={`/products/${duct.slug || duct.id}`}>
                   {duct.owner && duct.owner.isCertified === true && (
                     <span
                       className="absolute top-0 right-0 tracking-wider text-white bg-yellow-400 px-4 py-1 text-sm rounded leading-loose mx-2 my-2 font-semibold"

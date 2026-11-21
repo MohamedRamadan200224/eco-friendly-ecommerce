@@ -1,4 +1,5 @@
 import { TEAM } from "../../constants";
+import { handleImgError } from "../api/client";
 const Team = () => {
   return (
     <div className="mt-[60px] grid cursor-pointer gap-10 space-y-16 xs:grid-cols-2 xs:space-y-0 lg:grid-cols-4">
@@ -12,6 +13,7 @@ const Team = () => {
               src={team.img}
               alt="team_X"
               className="h-[100%] w-[100%] rounded-lg object-cover"
+              onError={handleImgError(team.name, "person")}
             />
           </div>
           <div className="mt-2 place-content-center">

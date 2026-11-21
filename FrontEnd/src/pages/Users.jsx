@@ -16,7 +16,7 @@ import Pagination from "../components/Pagination";
 import { Link } from "react-router-dom";
 import EcoLoader from "../components/EcoLoader";
 import { GoPlus } from "react-icons/go";
-import api, { userImageUrl } from "../api/client";
+import api, { userImageUrl, handleImgError } from "../api/client";
 import { useApiList } from "../hooks/useApiList";
 
 const Users = () => {
@@ -136,6 +136,7 @@ const Users = () => {
                               <img
                                 className="w-full h-full rounded-full"
                                 src={userImageUrl(user.photo)}
+                                onError={handleImgError(user.name, "person")}
                                 alt=""
                               />
                             </div>

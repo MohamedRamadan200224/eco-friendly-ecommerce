@@ -1,4 +1,7 @@
 const Review = require('./../models/reviewModel');
+const Order = require('./../models/orderModel');
+const AppError = require('./../utils/appError');
+const catchAsync = require('./../utils/catchAsync');
 const factory = require('./handlerFactory');
 
 exports.getReviewUserId = (req, res, next) => {
@@ -15,7 +18,53 @@ exports.getReviewUserId = (req, res, next) => {
 
 exports.checkReview = factory.checkIfDoneBefore(Review);
 
-exports.createReview = factory.createOne(Review, 'review');
+// Buyer feedback (review: star rating + text) is only for buyers: the
+// caller must have a PAID order containing this product. Orders are
+// created only by the Stripe webhook after a verified payment, so a
+// paid order is proof of purchase — there is no other way to get one.
+//
+// User and product are SERVER-derived (req.user + the product resolved
+// from the URL), like createVote does. The old code was the generic
+// createOne, which trusted req.body.user / req.body.product — a caller
+// could post a review as someone else or on a different product than
+// the URL names.
+exports.createReview = catchAsync(async (req, res, next) => {
+  const product = await factory.findProductBySlugOrId(req.params.productId);
+
+  if (!product) {
+    return next(new AppError('No product found with that ID', 404));
+  }
+
+  const purchase = await Order.findOne({
+    user: req.user.id,
+    'products.product': product._id,
+    paymentStatus: 'paid',
+  });
+
+  if (!purchase) {
+    return next(
+      new AppError(
+        'Only buyers who purchased this product can review it.',
+        403
+      )
+    );
+  }
+
+  const doc = await Review.create({
+    review: req.body.review,
+    rating: req.body.rating,
+    product: product._id,
+    user: req.user._id,
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});
+
 exports.updateReview = factory.updateOne(Review);
 exports.deleteReview = factory.deleteOne(Review);
 exports.getReview = factory.getOne(Review, 'review');
